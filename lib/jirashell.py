@@ -18,6 +18,7 @@ import time
 import codecs
 import operator
 import webbrowser
+import re
 
 import cmdln
 
@@ -97,6 +98,24 @@ class Jira(object):
                 return t
         else:
             raise JiraShellError("unknown issue type: %r" % issue_id)
+
+    def versions(self, project_key, exclude_archived=None,
+            exclude_released=None):
+        versions = self.server.jira1.getVersions(self.auth, project_key)
+        if exclude_archived:
+            versions = [v for v in versions if v["archived"] != "true"]
+        if exclude_released:
+            versions = [v for v in versions if v["released"] != "true"]
+        versions.sort(key=lambda v: int(v["sequence"]))
+        return versions
+
+    def version(self, issue_id):
+        assert isinstance(issue_id, str)
+        for v in self.versions():
+            if v["id"] == issue_id:
+                return v
+        else:
+            raise JiraShellError("unknown version: %r" % issue_id)
 
     def statuses(self):
         if "statuses" not in self.cache:
@@ -193,6 +212,21 @@ class JiraShell(cmdln.Cmdln):
         else:
             print self._issue_repr(issue)
 
+    def default(self, argv):
+        key_re = re.compile(r'^\b[A-Z]+\b-\d+$')
+        if key_re.search(argv[0]):
+            return self.onecmd(['issue'] + argv)
+        return cmdln.Cmdln.default(self, argv)
+
+    #TODO
+    #def completedefault(self, text, line, begidx, endidx):
+    #    # Complete paths in the cwd.
+    #    start = line[begidx:endidx]
+    #    parent = udirname(start)
+    #    res, dirents = _manta_getdir(self._get_manta_url(parent))
+    #    matches = [m for m in dirents.keys() if m.startswith(start)]
+    #    return matches
+
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issuetypes(self, subcmd, opts, *project_key):
         """Get an issue types (e.g. bug, task, ...).
@@ -213,10 +247,38 @@ class JiraShell(cmdln.Cmdln):
             for t in types:
                 print template % (t["id"], t["name"], t["description"])
 
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    @cmdln.option("-a", dest="exclude_archived", action="store_true",
+        help="exclude archived versions")
+    @cmdln.option("-r", dest="exclude_released", action="store_true",
+        help="exclude released versions")
+    def do_versions(self, subcmd, opts, project_key):
+        """Get available versions for the given project.
+
+        Usage:
+            ${cmd_name} PROJECT-KEY
+
+        ${cmd_option_list}
+        """
+        versions = self.jira.versions(project_key,
+            exclude_archived=opts.exclude_archived,
+            exclude_released=opts.exclude_released)
+        if opts.json:
+            print json.dumps(versions, indent=2)
+        else:
+            template = "%-5s  %-22s  %8s  %8s"
+            print template % ("ID", "NAME", "RELEASED", "ARCHIVED")
+            for v in versions:
+                print template % (
+                    v["id"],
+                    v["name"],
+                    (v["released"] == "true" and "released" or "-"),
+                    (v["archived"] == "true" and "archived" or "-"))
+
     #TODO: -t, --type option  (default to bug)
     #       createbug, createtask, ... aliases for this
     #TODO: -a, --assignee, allow "me"
-    #TODO: -o to open the ticket
+    #TODO: --browse to open the ticket
     #TODO: attachments?
     @cmdln.option("-d", "--description",
         help="issue description. If not given, this will prompt.")
@@ -269,9 +331,6 @@ class JiraShell(cmdln.Cmdln):
 
 
 
-
-
-
 #---- support stuff
 
 ## {{{ http://code.activestate.com/recipes/577099/ (r1)
@@ -306,7 +365,7 @@ def main(argv=sys.argv):
     logging.basicConfig(format='%(name)s: %(levelname)s: %(message)s')
     log.setLevel(logging.INFO)
     shell = JiraShell()
-    return shell.main(argv)
+    return shell.main(argv, loop=cmdln.LOOP_IF_EMPTY)
 
 
 ## {{{ http://code.activestate.com/recipes/577258/ (r5)
