@@ -6,6 +6,8 @@
 # <http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html>
 #
 
+__version__ = "1.0.0"
+
 import os
 import sys
 import logging
@@ -121,6 +123,8 @@ class JiraShell(cmdln.Cmdln):
 
     def get_optparser(self):
         parser = cmdln.Cmdln.get_optparser(self)
+        parser.add_option("--version", action="store_true",
+            help="show version and exit")
         parser.add_option("-d", "--debug", action="store_true",
             help="debug logging")
         parser.add_option("-J", "--jira-url", dest="jira_url",
@@ -142,10 +146,19 @@ class JiraShell(cmdln.Cmdln):
     def postoptparse(self):
         if self.options.debug:
             log.setLevel(logging.DEBUG)
+        if self.options.version:
+            print "jirash %s" % __version__
+            sys.exit(0)
         self.cfg = self._load_cfg()
         self.jira_url = self.options.jira_url or self.cfg["jira_url"]
-        self.jira = Jira(self.jira_url, self.cfg[self.jira_url]["username"],
-            self.cfg[self.jira_url]["password"])
+
+    _jira_cache = None
+    @property
+    def jira(self):
+        if not self._jira_cache:
+            self._jira_cache = Jira(self.jira_url, self.cfg[self.jira_url]["username"],
+                self.cfg[self.jira_url]["password"])
+        return self._jira_cache
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_projects(self, subcmd, opts):
