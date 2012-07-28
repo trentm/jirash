@@ -20,10 +20,47 @@ First you need a config file with Jira URL and auth info:
       }
     }
 
-Then use it:
+Then use it (this is an example and might be a little out of date):
 
-    $ jirash
-    ... help output ...
+    $ jirash help
+    Usage:
+        jirash COMMAND [ARGS...]
+        jirash help [COMMAND]
+
+    Options:
+        -h, --help          show this help message and exit
+        --version           show version and exit
+        -d, --debug         debug logging
+        -J JIRA_URL, --jira-url=JIRA_URL
+                            Jira base URL. Otherwise defaults to 'jira_url' value
+                            from config file.
+
+    Commands:
+        createissue    Create a new issue.
+        help (?)       give detailed help on a specific sub-command
+        issue          Get an issue.
+        issuetypes     Get an issue types (e.g. bug, task, ...).
+        projects       List projects (excluding "Archived" projects).
+        versions       Get available versions for the given project.
+
     $ jirash projects
+    KEY         NAME                              LEAD
+    DOC         DOC: Documentation                philip
+    TOOLS       TOOLS: Tools and Extras           trent.mick
     ...
+
+    $ jirash issues TOOLS-90
+    TOOLS-90: Add a distclean target (mark.cavage -> trent.mick, Improvem...)
+
+    $ jirash TOOLS-90     # shortcut
+    TOOLS-90: Add a distclean target (mark.cavage -> trent.mick, Improvem...)
+
+    $ ./jirash.py createissue TOOLS
+    Summary: Foo is broken
+    Description (use '.' on a line by itself to finish):
+    blah
+    blah
+    blah
+    .
+    created: TOOLS-157: Foo is broken (trent.mick -> <unassigned>, Bug, Normal, Open)
 
