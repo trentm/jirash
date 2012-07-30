@@ -99,6 +99,19 @@ class Jira(object):
         else:
             raise JiraShellError("unknown issue type: %r" % issue_id)
 
+    def components(self, project_key):
+        components = self.server.jira1.getComponents(self.auth, project_key)
+        components.sort(key=operator.itemgetter("name"))
+        return components
+
+    def component(self, project_key, component_id):
+        assert isinstance(component_id, str)
+        for c in self.components(project_key):
+            if c["id"] == component_id:
+                return c
+        else:
+            raise JiraShellError("unknown component id: %r" % component_id)
+
     def versions(self, project_key, exclude_archived=None,
             exclude_released=None):
         versions = self.server.jira1.getVersions(self.auth, project_key)
@@ -109,13 +122,13 @@ class Jira(object):
         versions.sort(key=lambda v: int(v["sequence"]))
         return versions
 
-    def version(self, issue_id):
-        assert isinstance(issue_id, str)
+    def version(self, version_id):
+        assert isinstance(version_id, str)
         for v in self.versions():
-            if v["id"] == issue_id:
+            if v["id"] == version_id:
                 return v
         else:
-            raise JiraShellError("unknown version: %r" % issue_id)
+            raise JiraShellError("unknown version: %r" % version_id)
 
     def statuses(self):
         if "statuses" not in self.cache:
@@ -274,6 +287,24 @@ class JiraShell(cmdln.Cmdln):
                     v["name"],
                     (v["released"] == "true" and "released" or "-"),
                     (v["archived"] == "true" and "archived" or "-"))
+
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_components(self, subcmd, opts, project_key):
+        """Get available components for the given project.
+
+        Usage:
+            ${cmd_name} PROJECT-KEY
+
+        ${cmd_option_list}
+        """
+        components = self.jira.components(project_key)
+        if opts.json:
+            print json.dumps(components, indent=2)
+        else:
+            template = "%-5s  %s"
+            print template % ("ID", "NAME")
+            for c in components:
+                print template % (c["id"], c["name"])
 
     #TODO: -t, --type option  (default to bug)
     #       createbug, createtask, ... aliases for this
