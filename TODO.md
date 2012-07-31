@@ -1,10 +1,6 @@
-- tab complete for commands
 - tab complete for project names
 - http caching and perhaps more aggresive (e.g. for project names and users)
 - add '-c component' to createissue
-- add '-a assignee' to createissue. Harder to get usernames. What is
-  assignee field in this?
-  http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/soap/beans/RemoteIssue.html
 - '--cc' field in `jirash createissue` to add watchers. Perhaps '-w', '--watch'.
 - search (Doesn't seem to be an XML-RPC API way to do anything
   but basic text searches though. I.e. can't *create* "filters".)
