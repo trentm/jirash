@@ -50,7 +50,7 @@ class Jira(object):
     def filters(self):
         if "filters" not in self.cache:
             filters = self.server.jira1.getFavouriteFilters(self.auth)
-            projects.sort(key=operator.itemgetter("name"))
+            filters.sort(key=operator.itemgetter("name"))
             self.cache["filters"] = filters
         return self.cache["filters"]
 
@@ -284,10 +284,8 @@ class JiraShell(cmdln.Cmdln):
     #def completedefault(self, text, line, begidx, endidx):
     #    # Complete paths in the cwd.
     #    start = line[begidx:endidx]
-    #    parent = udirname(start)
-    #    res, dirents = _manta_getdir(self._get_manta_url(parent))
-    #    matches = [m for m in dirents.keys() if m.startswith(start)]
-    #    return matches
+    #    print "XXX %r %r %r" % (test, line, start)
+    #    return []
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issuetypes(self, subcmd, opts, *project_key):
@@ -454,6 +452,18 @@ def query_multiline(question):
 #---- mainline
 
 def main(argv=sys.argv):
+    # Support `complete -C 'jirash --bash-completion' jirash` for Bash
+    # completion.
+    if len(argv) > 1 and argv[1] == "--bash-completion":
+        # exec: 'python /path/to/cmdln.py /path/to/script.py CmdlnClass'
+        _dir = os.path.dirname(os.path.realpath(__file__))
+        _jirashell_py = os.path.join(_dir, "jirashell.py")
+        _cmdln_py = os.path.join(_dir, "cmdln.py")
+        _cmd = '"%s" "%s" "%s" JiraShell %s' % (
+            sys.executable, _cmdln_py, _jirashell_py, ' '.join(sys.argv[2:]))
+        #print("calling `%s`" % _cmd)
+        return os.system(_cmd)
+
     logging.basicConfig(format='%(name)s: %(levelname)s: %(message)s')
     log.setLevel(logging.INFO)
     shell = JiraShell()

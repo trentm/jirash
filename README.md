@@ -5,9 +5,15 @@ That sort of thing.
 
 Get jirash:
 
-    $ cd ~/opt
+    $ cd ~/opt      # or whereever
     $ git clone https://github.com/trentm/jirash.git
-    $ alias jirash='$HOME/opt/jirash/bin/jirash'      # or whatever
+
+Put the following in your "~/.bashrc". The bash completion is just for
+sub-commands. It doesn't support completing options or sub-commands
+arguments.
+
+    alias jirash='$HOME/opt/jirash/bin/jirash'      # or whatever
+    complete -C 'jirash --bash-completion' jirash   # bash completion
 
 First you need a config file with Jira URL and auth info:
 
@@ -20,7 +26,8 @@ First you need a config file with Jira URL and auth info:
       }
     }
 
-Then use it (this is an example and might be a little out of date):
+Then use it. Note that the help output here is probably a little out of
+date (i.e. there are probably more supported commands in the latest).
 
     $ jirash help
     Usage:
@@ -63,4 +70,3 @@ Then use it (this is an example and might be a little out of date):
     blah
     .
     created: TOOLS-157: Foo is broken (trent.mick -> <unassigned>, Bug, Normal, Open)
-
