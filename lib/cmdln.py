@@ -82,7 +82,7 @@ class CmdlnUserError(Exception):
 
 def alias(*aliases):
     """Decorator to add aliases for Cmdln.do_* command handlers.
-    
+
     Example:
         class MyShell(cmdln.Cmdln):
             @cmdln.alias("!", "sh")
@@ -129,7 +129,7 @@ class RawCmdln(cmd.Cmd):
 
     helpindent = '' # string with which to indent help output
 
-    def __init__(self, completekey='tab', 
+    def __init__(self, completekey='tab',
                  stdin=None, stdout=None, stderr=None):
         """Cmdln(completekey='tab', stdin=None, stdout=None, stderr=None)
 
@@ -137,11 +137,11 @@ class RawCmdln(cmd.Cmd):
         completion key; it defaults to the Tab key. If completekey is
         not None and the readline module is available, command completion
         is done automatically.
-        
+
         The optional arguments 'stdin', 'stdout' and 'stderr' specify
         alternate input, output and error output file objects; if not
         specified, sys.* are used.
-        
+
         If 'stdout' but not 'stderr' is specified, stdout is used for
         error output. This is to provide least surprise for users used
         to only the 'stdin' and 'stdout' options with cmd.Cmd.
@@ -182,7 +182,7 @@ class RawCmdln(cmd.Cmd):
         can return None to have no options at the top-level. Typically
         an instance of CmdlnOptionParser should be returned.
         """
-        version = (self.version is not None 
+        version = (self.version is not None
                     and "%s %s" % (self._name_str, self.version)
                     or None)
         return CmdlnOptionParser(self, version=version)
@@ -202,14 +202,14 @@ class RawCmdln(cmd.Cmd):
             class MyCmd(cmdln.Cmdln):
                 name = "mycmd"
                 ...
-            
+
             if __name__ == "__main__":
                 MyCmd().main()
 
         By default this will use sys.argv to issue a single command to
         'MyCmd', then exit. The 'loop' argument can be use to control
         interactive shell behaviour.
-        
+
         Arguments:
             "argv" (optional, default sys.argv) is the command to run.
                 It must be a sequence, where the first element is the
@@ -262,7 +262,7 @@ class RawCmdln(cmd.Cmd):
 
     def cmd(self, argv):
         """Run one command and exit.
-        
+
             "argv" is the arglist for the command to run. argv[0] is the
                 command to run. If argv is an empty list then the
                 'emptyline' handler is run.
@@ -298,7 +298,7 @@ class RawCmdln(cmd.Cmd):
         """Repeatedly issue a prompt, accept input, parse into an argv, and
         dispatch (via .precmd(), .onecmd() and .postcmd()), passing them
         the argv. In other words, start a shell.
-        
+
             "intro" (optional) is a introductory message to print when
                 starting the command loop. This overrides the class
                 "intro" attribute, if any.
@@ -368,7 +368,7 @@ class RawCmdln(cmd.Cmd):
         interpreted, but after the input prompt is generated and issued.
 
             "argv" is the cmd to run.
-            
+
         Returns an argv to run (i.e. this method can modify the command
         to run).
         """
@@ -376,7 +376,7 @@ class RawCmdln(cmd.Cmd):
 
     def postcmd(self, argv):
         """Hook method executed just after a command dispatch is finished.
-        
+
             "argv" is the command that was run.
         """
         pass
@@ -421,7 +421,7 @@ class RawCmdln(cmd.Cmd):
         """Hook called to handle a command for which there is no handler.
 
             "argv" is the command and arguments to run.
-        
+
         The default implementation writes an error message to stderr
         and returns an error exit status.
 
@@ -457,7 +457,7 @@ class RawCmdln(cmd.Cmd):
             "cmd" is the command name on which help was requested.
             "known" is a boolean indicating if this command is known
                 (i.e. if there is a handler for it).
-        
+
         Returns a return code.
         """
         if known:
@@ -583,7 +583,7 @@ class RawCmdln(cmd.Cmd):
             i.e.  using @cmdln.option decorators or manually setting the
             'optparser' attribute on the 'do_*' method.)
 
-        Returns the processed help. 
+        Returns the processed help.
         """
         preprocessors = {
             "${name}":            self._help_preprocess_name,
@@ -618,7 +618,7 @@ class RawCmdln(cmd.Cmd):
             block = self.optparser.format_option_help() + '\n'
         else:
             block = ""
-            
+
         help = help.replace(indent+marker+suffix, block, 1)
         return help
 
@@ -655,7 +655,7 @@ class RawCmdln(cmd.Cmd):
                     doc = handler.__doc__
             else:
                 doc = helpfunc()
-                
+
             # Strip "${cmd_name}: " from the start of a command's doc. Best
             # practice dictates that command help strings begin with this, but
             # it isn't at all wanted for the command list.
@@ -665,9 +665,9 @@ class RawCmdln(cmd.Cmd):
                 #          to_strip, cmdname)
                 doc = doc[len(to_strip):].lstrip()
             linedata.append( (cmdstr, doc) )
-    
+
         return linedata
-    
+
     def _help_preprocess_command_list(self, help, cmdname=None):
         marker = "${command_list}"
         indent, indent_width = _get_indent(marker, help)
@@ -732,7 +732,7 @@ class RawCmdln(cmd.Cmd):
         handler = self._get_cmd_handler(cmdname)
         if not handler:
             raise CmdlnError("cannot preprocess '%s' into help string: "
-                             "could not find command handler for %r" 
+                             "could not find command handler for %r"
                              % (marker, cmdname))
         s = cmdname
         if hasattr(handler, "aliases"):
@@ -748,7 +748,7 @@ class RawCmdln(cmd.Cmd):
         handler = self._get_cmd_handler(cmdname)
         if not handler:
             raise CmdlnError("cannot preprocess '%s' into help string: "
-                             "could not find command handler for %r" 
+                             "could not find command handler for %r"
                              % (marker, cmdname))
         indent, indent_width = _get_indent(marker, help)
         suffix = _get_trailing_whitespace(marker, help)
@@ -784,7 +784,7 @@ class RawCmdln(cmd.Cmd):
                 # keyword arguments from the command line. Could
                 # *perhaps* consider: arg=value arg2=value2 ...
                 warnings.warn("argument '**%s' on '%s.%s' command "
-                              "handler will never get values" 
+                              "handler will never get values"
                               % (name, self.__class__.__name__,
                                  func.func_name))
             if co_flags & CO_FLAGS_ARGS:
@@ -816,7 +816,7 @@ class RawCmdln(cmd.Cmd):
         handler = self._get_cmd_handler(cmdname)
         if not handler:
             raise CmdlnError("cannot preprocess '%s' into help string: "
-                             "could not find command handler for %r" 
+                             "could not find command handler for %r"
                              % (marker, cmdname))
         indent, indent_width = _get_indent(marker, help)
         suffix = _get_trailing_whitespace(marker, help)
@@ -915,7 +915,7 @@ class StopOptionProcessing(Exception):
     StopIteration. This is raised by _OptionParserEx's default "help"
     and "version" option actions and can be raised by custom option
     callbacks too.
-    
+
     Hence the typical CmdlnOptionParser (a subclass of _OptionParserEx)
     usage is:
 
@@ -1011,7 +1011,7 @@ class SubCmdOptionParser(_OptionParserEx):
 def option(*args, **kwargs):
     """Decorator to add an option to the optparser argument of a Cmdln
     subcommand.
-    
+
     Example:
         class MyShell(cmdln.Cmdln):
             @cmdln.option("-f", "--force", help="force removal")
@@ -1152,15 +1152,15 @@ class Cmdln(RawCmdln):
 def man_sections_from_cmdln(inst, summary=None, description=None, author=None):
     """Return man page sections appropriate for the given Cmdln instance.
     Join these sections for man page content.
-    
+
     The man page sections generated are:
         NAME
         SYNOPSIS
         DESCRIPTION  (if `description` is given)
         OPTIONS
         COMMANDS
-        HELP TOPICS (if any) 
-    
+        HELP TOPICS (if any)
+
     @param inst {Cmdln} Instance of Cmdln subclass for which to generate
         man page content.
     @param summary {str} A one-liner summary of the command.
@@ -1177,12 +1177,12 @@ def man_sections_from_cmdln(inst, summary=None, description=None, author=None):
     data = {
         "name": inst.name,
         "ucname": inst.name.upper(),
-        "date": datetime.date.today().strftime("%b %Y"), 
+        "date": datetime.date.today().strftime("%b %Y"),
         "cmdln_version": __version__,
         "version_str": inst.version and " %s" % inst.version or "",
         "summary_str": summary and r" \- %s" % summary or "",
     }
-    
+
     sections = []
     sections.append('.\\" Automatically generated by cmdln %(cmdln_version)s\n'
         '.TH %(ucname)s "1" "%(date)s" "%(name)s%(version_str)s" "User Commands"\n'
@@ -1223,7 +1223,7 @@ def man_sections_from_cmdln(inst, summary=None, description=None, author=None):
         doc = doc.rstrip() + "\n"  # trim down trailing space
         section += '.PP\n.SS %s\n%s\n' % (cmdstr, doc)
     sections.append(section)
-    
+
     help_names = inst._get_help_names()
     if help_names:
         section = ".SH HELP TOPICS\n"
@@ -1244,7 +1244,7 @@ def man_sections_from_cmdln(inst, summary=None, description=None, author=None):
 
 def _format_linedata(linedata, indent, indent_width):
     """Format specific linedata into a pleasant layout.
-    
+
         "linedata" is a list of 2-tuples of the form:
             (<item-display-string>, <item-docstring>)
         "indent" is a string to use for one level of indentation
@@ -1278,7 +1278,7 @@ def _format_linedata(linedata, indent, indent_width):
 
 def _summarize_doc(doc, length=60):
     r"""Parse out a short one line summary from the given doclines.
-    
+
         "doc" is the doc string to summarize.
         "length" is the max length for the summary
 
@@ -1310,19 +1310,19 @@ def _summarize_doc(doc, length=60):
 
     summary = ' '.join(summlines)
     if len(summary) > length:
-        summary = summary[:length-3] + "..." 
+        summary = summary[:length-3] + "..."
     return summary
 
 
 def line2argv(line):
     r"""Parse the given line into an argument vector.
-    
+
         "line" is the line of input to parse.
 
     This may get niggly when dealing with quoting and escaping. The
     current state of this parsing may not be completely thorough/correct
     in this respect.
-    
+
     >>> from cmdln import line2argv
     >>> line2argv("foo")
     ['foo']
@@ -1334,7 +1334,7 @@ def line2argv(line):
     ['foo', 'bar']
 
     Quote handling:
-    
+
     >>> line2argv("'foo bar'")
     ['foo bar']
     >>> line2argv('"foo bar"')
@@ -1345,7 +1345,7 @@ def line2argv(line):
     ['foo bar', 'spam']
     >>> line2argv("'foo 'bar spam")
     ['foo bar', 'spam']
-    
+
     >>> line2argv('some\tsimple\ttests')
     ['some', 'simple', 'tests']
     >>> line2argv('a "more complex" test')
@@ -1437,9 +1437,9 @@ def line2argv(line):
 
 def argv2line(argv):
     r"""Put together the given argument vector into a command line.
-    
+
         "argv" is the argument vector to process.
-    
+
     >>> from cmdln import argv2line
     >>> argv2line(['foo'])
     'foo'
@@ -1472,18 +1472,18 @@ def argv2line(argv):
 # Recipe: dedent (0.1) in /Users/trentm/tm/recipes/cookbook
 def _dedentlines(lines, tabsize=8, skip_first_line=False):
     """_dedentlines(lines, tabsize=8, skip_first_line=False) -> dedented lines
-    
+
         "lines" is a list of lines to dedent.
         "tabsize" is the tab width to use for indent width calculations.
         "skip_first_line" is a boolean indicating if the first line should
             be skipped for calculating the indent width and for dedenting.
             This is sometimes useful for docstrings and similar.
-    
+
     Same as dedent() except operates on a sequence of lines. Note: the
     lines list is modified **in-place**.
     """
     DEBUG = False
-    if DEBUG: 
+    if DEBUG:
         print "dedent: dedent(..., tabsize=%d, skip_first_line=%r)"\
               % (tabsize, skip_first_line)
     indents = []
@@ -1545,7 +1545,7 @@ def _dedent(text, tabsize=8, skip_first_line=False):
         "skip_first_line" is a boolean indicating if the first line should
             be skipped for calculating the indent width and for dedenting.
             This is sometimes useful for docstrings and similar.
-    
+
     textwrap.dedent(s), but don't expand tabs to spaces
     """
     lines = text.splitlines(1)
@@ -1691,4 +1691,3 @@ if __name__ == "__main__" and len(sys.argv) == 6:
 
     for cpln in _get_bash_cplns(*sys.argv[1:]):
         print cpln
-
