@@ -6,7 +6,7 @@
 # <http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html>
 #
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 import os
 import sys
@@ -46,6 +46,16 @@ class Jira(object):
         # WARNING: if we allow a longer jira shell session, then caching
         # might need invalidation.
         self.cache = {}
+
+    def filters(self):
+        if "filters" not in self.cache:
+            filters = self.server.jira1.getFavouriteFilters(self.auth)
+            projects.sort(key=operator.itemgetter("name"))
+            self.cache["filters"] = filters
+        return self.cache["filters"]
+
+    def user(self, username):
+        return self.server.jira1.getUser(self.auth, username)
 
     def projects(self):
         if "projects" not in self.cache:
@@ -211,6 +221,45 @@ class JiraShell(cmdln.Cmdln):
                 print template % (p["key"], p["name"], p["lead"])
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_filters(self, subcmd, opts):
+        """List "favourite" filters for the current user.
+
+        Usage:
+            ${cmd_name}
+
+        ${cmd_option_list}
+        """
+        filters = self.jira.filters()
+        if opts.json:
+            print json.dumps(filters, indent=2)
+        else:
+            template = "%-5s  %-15s  %s"
+            print template % ("ID", "AUTHOR", "NAME")
+            for f in filters:
+                print template % (f["id"], f["author"], f["name"])
+
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_user(self, subcmd, opts, username):
+        """List a given user's information.
+
+        Usage:
+            ${cmd_name}
+
+        ${cmd_option_list}
+        """
+        user = self.jira.user(username)
+        if not user:
+            log.error("no such user: %r", username)
+            return 1
+        elif opts.json:
+            print json.dumps(user, indent=2)
+        else:
+            template = "%-15s  %-20s  %s"
+            print template % ("NAME", "FULLNAME", "EMAIL")
+            print template % (user["name"], user["fullname"], user["email"])
+
+
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issue(self, subcmd, opts, key):
         """Get an issue.
 
@@ -308,11 +357,12 @@ class JiraShell(cmdln.Cmdln):
 
     #TODO: -t, --type option  (default to bug)
     #       createbug, createtask, ... aliases for this
-    #TODO: -a, --assignee, allow "me"
     #TODO: --browse to open the ticket
     #TODO: attachments?
     @cmdln.option("-d", "--description",
         help="issue description. If not given, this will prompt.")
+    @cmdln.option("-a", "--assignee",
+        help="Assignee username. (XXX Don't have a good way to list available usernames right now.)")
     def do_createissue(self, subcmd, opts, project_key, *summary):
         """Create a new issue.
 
@@ -328,15 +378,26 @@ class JiraShell(cmdln.Cmdln):
             "project": project_key,
             "type": 1,   # Bug
         }
+
         if summary:
             summary = ' '.join(summary)
         else:
             summary = query("Summary")
         data["summary"] = summary
+
+        if not opts.assignee:
+            data["assignee"] = query(
+                "Assignee (blank for default, 'me' for yourself)")
+        else:
+            data["assignee"] = opts.assignee
+        if data["assignee"] == "me":
+            data["assignee"] = self.cfg[self.jira_url]["username"]
+
         if not opts.description:
             data["description"] = query_multiline("Description")
         else:
             data["description"] = opts.description
+
         issue = self.jira.create_issue(data)
         print "created:", self._issue_repr(issue)
         if True:
