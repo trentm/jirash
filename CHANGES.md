@@ -2,6 +2,7 @@
 
 # 1.1.0
 
+- `jirash issues TERMS...`, `jirash issues -f FILTER`
 - Bash completion of sub-command names:
 
         $ complete -C 'jirash --bash-completion' jirash    # setup bash completion

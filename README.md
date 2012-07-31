@@ -62,11 +62,26 @@ date (i.e. there are probably more supported commands in the latest).
     $ jirash TOOLS-90     # shortcut
     TOOLS-90: Add a distclean target (mark.cavage -> trent.mick, Improvem...)
 
-    $ ./jirash.py createissue TOOLS
+    $ jirash createissue TOOLS
     Summary: Foo is broken
+    Assignee (blank for default, 'me' for yourself): me
     Description (use '.' on a line by itself to finish):
     blah
     blah
     blah
     .
-    created: TOOLS-157: Foo is broken (trent.mick -> <unassigned>, Bug, Normal, Open)
+    created: TOOLS-157: Foo is broken (trent.mick -> trent.mick, Bug, Normal, Open)
+
+    $ jirash filters
+    ID     AUTHOR           NAME
+    10325  trent.mick       RELENG: open issues
+    10389  trent.mick       TOOLS: open issues
+    10183  trent.mick       trent.mick: open issues
+    10104  trent.mick       trent.mick: reported issues
+
+    # Here "TOOLS" matches the "TOOLS: open issues" saved filter.
+    $ jirash issues -f TOOLS
+    KEY          PRIO      STATUS    TYPE         REPORTER    ASSIGNEE    SUMMARY
+    TOOLS-150    Normal    Open      New Feature  linda       trent.mick  add sdc-vminfo to operator tools
+    TOOLS-143    Normal    Open      Bug          laurel      orlando     Be more tolerant of the location of the VirtualSystem location
+    ...

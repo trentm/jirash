@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf8 -*-
 #
 # A Jira shell (using the Jira XML-RPC API).
 #
@@ -89,6 +90,79 @@ class Jira(object):
 
     def issue(self, key):
         return self.server.jira1.getIssue(self.auth, key)
+
+    def issues_from_filter(self, filter):
+        """Return all issues for the given filter.
+
+        @param filter {String} Filter (saved search) to use. The given
+            argument can be the filter id, name, or a unique substring or
+            multi-term substring (e.g. 'foo bar' would match 'Filter foo
+            and bar') of the name.
+        """
+        # Find the filter.
+        filterObj = None
+        filters = self.filters()
+        # - if int, then try id match first
+        if isinstance(filter, int):
+            for f in filters:
+                if int(f["id"]) == filter:
+                    filterObj = f
+                    break
+            else:
+                raise JiraShellError("no filter with id %r" % filter)
+        if not filterObj:
+            # - try full name match
+            for f in filters:
+                if f["name"] == filter:
+                    filterObj = f
+                    break
+        if not filterObj:
+            # - try substring match
+            for f in filters:
+                if filter in f["name"]:
+                    filterObj = f
+                    break
+        if not filterObj and len(filter.split()) > 1:
+            # - try multi-term substring match
+            terms = filter.strip().split()
+            for f in filters:
+                found_terms = [t for t in terms if t in f["name"]]
+                if len(found_terms) == len(terms):
+                    filterObj = f
+                    break
+        if not filterObj:
+            raise JiraShellError("no filter found matching %r" % filter)
+        log.debug("filter match for %r: %s", filter, json.dumps(filterObj))
+        return self.server.jira1.getIssuesFromFilter(self.auth, filterObj["id"])
+
+    def issues_from_search(self, terms, project_keys=None):
+        """Search for issues.
+
+        @param terms {str} A single stream of search term(s).
+        @param project_keys {list} Optional list of project keys to which to
+            limit the search.
+        """
+        if isinstance(terms, (list, tuple)):
+            terms = ' '.join(terms)
+        if not project_keys:
+            #XXX
+            # TODO: This errors out against my Jira 4.2:
+            #   jirash: ERROR: <Fault 0: 'java.lang.NoSuchMethodException: com.atlassian.jira.rpc.xmlrpc.JiraXmlRpcService.getIssuesFromTextSearch(java.lang.String, java.util.Vector)'> (/Library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/xmlrpclib.py:838 in close)
+            # but this says it should exist:
+            #   http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/4.2/index.html?com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html
+            issues = self.server.jira1.getIssuesFromTextSearch(self.auth, terms)
+        else:
+            # Note: I don't want to bother with `maxNumResults` so we set
+            # it to a big number.
+            BIG = 1000000
+            issues = self.server.jira1.getIssuesFromTextSearchWithProject(
+                self.auth, project_keys, terms, BIG)
+            if len(issues) == BIG:
+                log.warn("*%s* matches returned for %r (projects %s), "
+                    "the result might not include a matches",
+                    BIG, terms, ', '.join(project_keys))
+        return issues
+
 
     def issue_types(self, project_key=None):
         if project_key:
@@ -258,7 +332,6 @@ class JiraShell(cmdln.Cmdln):
             print template % ("NAME", "FULLNAME", "EMAIL")
             print template % (user["name"], user["fullname"], user["email"])
 
-
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issue(self, subcmd, opts, key):
         """Get an issue.
@@ -272,7 +345,49 @@ class JiraShell(cmdln.Cmdln):
         if opts.json:
             print json.dumps(issue, indent=2)
         else:
-            print self._issue_repr(issue)
+            print self._issue_repr_flat(issue)
+
+    @cmdln.option("-f", "--filter",
+        help="Filter (saved search) to use. See `jirash filters`. The given "
+            "argument can be the filter id, name, or a unique substring or "
+            "multi-term substring (e.g. 'foo bar' would match 'Filter foo "
+            "and bar') of the name.")
+    @cmdln.option("-p", "--project", action="append", dest="project_keys",
+        help="Project key(s) to which to limit a text search")
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_issues(self, subcmd, opts, *terms):
+        """List issues from a filter (saved search) or text search.
+
+        Usage:
+            ${cmd_name} TERMS...
+            ${cmd_name} -f FILTER
+
+        ${cmd_option_list}
+        """
+        if opts.filter:
+            # Ignore 'terms' with a filter for now. TODO: subsearch
+            if opts.project_keys:
+                log.warn("ignoring project scoping for a *filter* search: '%s'",
+                    "', '".join(opts.project_keys))
+            if terms:
+                log.warn("ignoring search terms for a *filter* search: '%s'",
+                    "', '".join(terms))
+            issues = self.jira.issues_from_filter(opts.filter)
+        elif not terms:
+            log.error("no search terms given")
+            return 1
+        else:
+            # TODO: Consider separate search for each term and merge results
+            # if that is more useful.
+            term = ' '.join(terms)
+            issues = self.jira.issues_from_search(terms,
+                project_keys=opts.project_keys)
+        if opts.json:
+            print json.dumps(issues, indent=2)
+        else:
+            print self._issue_row_template % self._issue_columns
+            for issue in issues:
+                print self._issue_repr_tabular(issue)
 
     def default(self, argv):
         key_re = re.compile(r'^\b[A-Z]+\b-\d+$')
@@ -287,18 +402,18 @@ class JiraShell(cmdln.Cmdln):
     #    print "XXX %r %r %r" % (test, line, start)
     #    return []
 
+    @cmdln.option("-p", "--project", dest="project_key",
+        help="Project for which to get issue types.")
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
-    def do_issuetypes(self, subcmd, opts, *project_key):
+    def do_issuetypes(self, subcmd, opts):
         """Get an issue types (e.g. bug, task, ...).
 
         Usage:
-            ${cmd_name} [PROJECT-KEY]
+            ${cmd_name}
 
         ${cmd_option_list}
         """
-        assert len(project_key) in (0,1)
-        project_key = project_key and project_key[0] or None
-        types = self.jira.issue_types(project_key)
+        types = self.jira.issue_types(opts.project_key)
         if opts.json:
             print json.dumps(types, indent=2)
         else:
@@ -397,14 +512,18 @@ class JiraShell(cmdln.Cmdln):
             data["description"] = opts.description
 
         issue = self.jira.create_issue(data)
-        print "created:", self._issue_repr(issue)
+        print "created:", self._issue_repr_flat(issue)
         if True:
             url = "%s/browse/%s" % (self.jira_url, issue["key"])
             webbrowser.open(url)
 
-    def _issue_repr(self, issue):
+    def _issue_repr_flat(self, issue):
         try:
-            issue_type = self.jira.issue_type(issue["type"])
+            try:
+                issue_type = self.jira.issue_type(issue["type"])["name"]
+            except JiraShellError, e:
+                # The issue type may have been removed. Just use the id.
+                issue_type = "type:" + issue["type"]
             priority = self.jira.priority(issue["priority"])
             status = self.jira.status(issue["status"])
             return "%s: %s (%s -> %s, %s, %s, %s)" % (
@@ -412,9 +531,38 @@ class JiraShell(cmdln.Cmdln):
                 issue["summary"],
                 issue["reporter"],
                 issue.get("assignee", "<unassigned>"),
-                issue_type["name"],
+                issue_type,
                 priority["name"],
                 status["name"])
+        except Exception, e:
+            log.error("error making issue repr: %s (issue=%r)", e, issue)
+            raise
+
+    _issue_columns = ("KEY", "PRIO", "STATUS", "TYPE", "REPORTER",
+        "ASSIGNEE", "SUMMARY")
+    _issue_row_template = "%-11s  %-8s  %-8s  %-11s  %-10s  %-10s  %s"
+    def _issue_repr_tabular(self, issue):
+        def clip(s, length):
+            if len(s) > length:
+                s = s[:length-1] + u'\u2026'
+            return s
+        try:
+            try:
+                issue_type = self.jira.issue_type(issue["type"])["name"]
+            except JiraShellError, e:
+                # The issue type may have been removed. Just use the id.
+                issue_type = issue["type"]
+            priority = self.jira.priority(issue["priority"])
+            status = self.jira.status(issue["status"])
+            return self._issue_row_template % (
+                issue["key"],
+                priority["name"],
+                status["name"],
+                clip(issue_type, 11),
+                clip(issue["reporter"], 10),
+                clip(issue.get("assignee", "unassigned"), 10),
+                issue["summary"],
+            )
         except Exception, e:
             log.error("error making issue repr: %s (issue=%r)", e, issue)
             raise
