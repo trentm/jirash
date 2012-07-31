@@ -2,6 +2,7 @@
 
 # 1.1.0
 
+- `jirash statuses`
 - `jirash issues TERMS...`, `jirash issues -f FILTER`
 - Bash completion of sub-command names:
 

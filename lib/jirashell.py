@@ -227,6 +227,19 @@ class Jira(object):
         else:
             raise JiraShellError("unknown status: %r" % status_id)
 
+    def status_id(self, name):
+        """Get the id of the status matching the given name.
+
+        @param name {str} Case-insensitive status name.
+        """
+        statuses = self.statuses()
+        name_lower = name.lower()
+        for s in statuses:
+            if name == s["name"].lower():
+                return s["id"]
+        else:
+            raise JiraShellError("unknown status name: %r" % name)
+
     def create_issue(self, data):
         return self.server.jira1.createIssue(self.auth, data)
 
@@ -313,6 +326,24 @@ class JiraShell(cmdln.Cmdln):
                 print template % (f["id"], f["author"], f["name"])
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_statuses(self, subcmd, opts):
+        """List all possible issue statuses.
+
+        Usage:
+            ${cmd_name}
+
+        ${cmd_option_list}
+        """
+        statuses = self.jira.statuses()
+        if opts.json:
+            print json.dumps(statuses, indent=2)
+        else:
+            template = "%-5s  %-15s  %s"
+            print template % ("ID", "NAME", "DESCRIPTION")
+            for s in statuses:
+                print template % (s["id"], s["name"], s["description"])
+
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_user(self, subcmd, opts, username):
         """List a given user's information.
 
@@ -352,8 +383,13 @@ class JiraShell(cmdln.Cmdln):
             "argument can be the filter id, name, or a unique substring or "
             "multi-term substring (e.g. 'foo bar' would match 'Filter foo "
             "and bar') of the name.")
+    @cmdln.option("-s", "--status", action="append", dest="statuses",
+        help="Limit to issues with the given status string, e.g. 'open'. "
+            "Can be specified multiple times.")
     @cmdln.option("-p", "--project", action="append", dest="project_keys",
         help="Project key(s) to which to limit a text search")
+    @cmdln.option("-u", "--url", action="store_true",
+        help="Include a URL column in output.")
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issues(self, subcmd, opts, *terms):
         """List issues from a filter (saved search) or text search.
@@ -382,11 +418,23 @@ class JiraShell(cmdln.Cmdln):
             term = ' '.join(terms)
             issues = self.jira.issues_from_search(terms,
                 project_keys=opts.project_keys)
+
+        if opts.statuses:
+            status_ids = [self.jira.status_id(name) for name in opts.statuses]
+            issues = [i for i in issues if i["status"] in status_ids]
+
         if opts.json:
             print json.dumps(issues, indent=2)
         else:
+            if opts.url:
+                url_base = self.jira_url + '/browse/'
+                url_width = len(url_base) + 11   # 11 chars for key
+                url_template = "%%-%ds  " % url_width
+                sys.stdout.write(url_template % "URL")
             print self._issue_row_template % self._issue_columns
             for issue in issues:
+                if opts.url:
+                    sys.stdout.write(url_template % (url_base + issue["key"]))
                 print self._issue_repr_tabular(issue)
 
     def default(self, argv):
