@@ -225,6 +225,46 @@ class Jira(object):
         else:
             raise JiraShellError("unknown version: %r" % version_id)
 
+    def resolutions(self):
+        if "resolutions" not in self.cache:
+            self.cache["resolutions"] = self.server.jira1.getResolutions(self.auth)
+        return self.cache["resolutions"]
+
+    def resolution_id(self, name):
+        """Return the resolution id from the given id, name, or unique
+        substring match on the name.
+        """
+        resolutionObj = None
+        resolutions = self.resolutions()
+        name_lower = name.lower()
+        # - if int, then try id match first
+        if isinstance(name, int):
+            for r in resolutions:
+                if int(r["id"]) == name:
+                    resolutionObj = r
+                    break
+            else:
+                raise JiraShellError("no resolution with id %r" % name)
+        if not resolutionObj:
+            # - try full name match
+            for r in resolutions:
+                if r["name"].lower() == name_lower:
+                    resolutionObj = r
+                    break
+        if not resolutionObj:
+            # - try substring match
+            matches = [r for r in resolutions
+                if name_lower in r["name"].lower()]
+            if len(matches) == 1:
+                resolutionObj = matches[0]
+            elif len(matches) > 1:
+                raise JiraShellError(
+                    "'%s' is ambiguous: matching resolutions: \"%s\"" % (
+                    name, '", "'.join([r["name"] for r in matches])))
+        if not resolutionObj:
+            raise JiraShellError("no resolution found matching %r" % name)
+        return resolutionObj["id"]
+
     def statuses(self):
         if "statuses" not in self.cache:
             self.cache["statuses"] = self.server.jira1.getStatuses(self.auth)
@@ -253,6 +293,11 @@ class Jira(object):
 
     def create_issue(self, data):
         return self.server.jira1.createIssue(self.auth, data)
+
+    def update_issue(self, key, data):
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("calling createIssue(%r, %s)", key, json.dumps(data))
+        return self.server.jira1.updateIssue(self.auth, key, data)
 
 
 #---- JiraShell
@@ -353,6 +398,24 @@ class JiraShell(cmdln.Cmdln):
             print template % ("ID", "NAME", "DESCRIPTION")
             for s in statuses:
                 print template % (s["id"], s["name"], s["description"])
+
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_resolutions(self, subcmd, opts):
+        """List all possible issue resolutions.
+
+        Usage:
+            ${cmd_name}
+
+        ${cmd_option_list}
+        """
+        resolutions = self.jira.resolutions()
+        if opts.json:
+            print json.dumps(resolutions, indent=2)
+        else:
+            template = "%-5s  %-16s  %s"
+            print template % ("ID", "NAME", "DESCRIPTION")
+            for r in resolutions:
+                print template % (r["id"], r["name"], r["description"])
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_user(self, subcmd, opts, username):
@@ -535,6 +598,8 @@ class JiraShell(cmdln.Cmdln):
         help="issue description. If not given, this will prompt.")
     @cmdln.option("-a", "--assignee",
         help="Assignee username. (XXX Don't have a good way to list available usernames right now.)")
+    @cmdln.option("-B", "--no-browse", action="store_true",
+        help="Do *not* attempt to open the browser to the created issue.")
     def do_createissue(self, subcmd, opts, project_key, *summary):
         """Create a new issue.
 
@@ -572,9 +637,45 @@ class JiraShell(cmdln.Cmdln):
 
         issue = self.jira.create_issue(data)
         print "created:", self._issue_repr_flat(issue)
-        if True:
+        if not opts.no_browse:
             url = "%s/browse/%s" % (self.jira_url, issue["key"])
             webbrowser.open(url)
+
+    #@cmdln.option("-r", "--resolution",
+    #    help="Resolution. Default is 'fixed'. See `jira resolutions`. The "
+    #        "given value can be a resolution id, name or unique name "
+    #        "substring.")
+    #def do_resolve(self, subcmd, opts, key):
+    #    """Resolve an issue.
+    #
+    #    Usage:
+    #        ${cmd_name} ISSUE-KEY
+    #
+    #    ${cmd_option_list}
+    #    """
+    #    issue = self.jira.issue(key)
+    #    pprint(issue)
+    #    del issue["id"]
+    #    del issue["key"]
+    #    del issue["reporter"]
+    #
+    #    # Actual helpful docs on updateIssue():
+    #    # https://jira.atlassian.com/browse/JRA-10588
+    #    del issue["project"]
+    #    del issue["created"]
+    #
+    #    issue["resolution"] = self.jira.resolution_id(
+    #        opts.resolution or "fixed")
+    #
+    #    changes = {
+    #        "resolution": [issue["resolution"]],
+    #        "summary": [issue["summary"] + "2"],
+    #        "status": [self.jira.status_id("resolved")],
+    #    }
+    #    pprint(changes)
+    #    updated = self.jira.update_issue(key, changes)
+    #    print "updated:", self._issue_repr_flat(updated)
+
 
     def _issue_repr_flat(self, issue):
         try:
@@ -603,7 +704,10 @@ class JiraShell(cmdln.Cmdln):
     def _issue_repr_tabular(self, issue):
         def clip(s, length):
             if len(s) > length:
-                s = s[:length-1] + u'\u2026'
+                if sys.stdout.encoding not in (None, 'ascii'):
+                    s = s[:length-1] + u'\u2026'
+                else:
+                    s = s[:length-3] + '...'
             return s
         try:
             try:
