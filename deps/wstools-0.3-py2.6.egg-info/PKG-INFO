@@ -1,0 +1,49 @@
+Metadata-Version: 1.0
+Name: wstools
+Version: 0.3
+Summary: wstools
+Home-page: http://pywebsvcs.sf.net/
+Author: Gregory Warnes, kiorky
+Author-email: Gregory.R.Warnes@Pfizer.com, kiorky@cryptelium.net
+License: UNKNOWN
+Description: WSDL parsing services package for Web Services for Python. see http://pywebsvcs.sf.net/
+        
+        Credits
+        ========
+        Companies
+        ---------
+        |makinacom|_
+        
+          * `Planet Makina Corpus <http://www.makina-corpus.org>`_
+          * `Contact us <mailto:python@makina-corpus.org>`_
+        
+        .. |makinacom| image:: http://depot.makina-corpus.org/public/logo.gif
+        .. _makinacom:  http://www.makina-corpus.com
+        
+        Authors
+        ------------
+        
+        - Makina Corpus <python@makina-corpus.com>
+        
+        Contributors
+        -----------------
+        
+        
+        
+        CHANGELOG
+        ===========
+        
+        0.3 (2011-02-21)
+        ----------------
+                - proper release 
+        
+        0.2 - (unreleased)
+        ----------------------
+                - proper release
+        
+        0.1 - (unreleased)
+        ----------------------
+        
+                - make wstools as an egg
+        
+Platform: UNKNOWN
