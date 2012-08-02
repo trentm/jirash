@@ -1,3 +1,17 @@
+# bugs
+
+XXX data: "I was setting up a compute node in COAL using 6.5.3 RC3. Eventually, A...
+jirash: ERROR: 'utf8' codec can't decode byte 0xa0 in position 338: invalid start byte (/Library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/xmlrpclib.py:165 in _decode)
+
+Same utf8 thing. Need a general fix. Use the baroque and deep hacks into
+xmlrpclib.py to not get decoding. Than handle that gracefully up higher.
+or ... monkeypatch xmlrpclib to be graceful. Yes, monkey patch.
+
+
+
+# todo
+
+- resolve a ticket (need to figure out custom fields, e.g. Fixed in Version/s???)
 - tab complete for project names
 - http caching and perhaps more aggresive (e.g. for project names and users)
 - add '-c component' to createissue

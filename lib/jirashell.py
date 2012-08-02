@@ -37,12 +37,23 @@ class JiraShellError(Exception):
     pass
 
 
+#---- monkey-patching
+
+def _decode(data, encoding, is8bit=re.compile("[\x80-\xff]").search):
+    # decode non-ascii string (if possible)
+    if unicode and encoding and is8bit(data):
+        print "XXX _decode(%r)" % data
+        data = unicode(data, encoding, 'replace')
+    return data
+xmlrpclib._decode = _decode
+
 
 #---- Jira API
 
 class Jira(object):
     def __init__(self, jira_url, username, password):
-        self.server = xmlrpclib.ServerProxy(jira_url + '/rpc/xmlrpc')
+        self.server = xmlrpclib.ServerProxy(jira_url + '/rpc/xmlrpc',
+            verbose=False)
         self.auth = self.server.jira1.login(username, password)
         # WARNING: if we allow a longer jira shell session, then caching
         # might need invalidation.
@@ -605,7 +616,7 @@ class JiraShell(cmdln.Cmdln):
             return self._issue_row_template % (
                 issue["key"],
                 priority["name"],
-                status["name"],
+                clip(status["name"], 8),
                 clip(issue_type, 11),
                 clip(issue["reporter"], 10),
                 clip(issue.get("assignee", "unassigned"), 10),
