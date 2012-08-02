@@ -2,6 +2,7 @@
 
 # 1.1.0
 
+- `jirash resolutions`
 - Monkey-patch xmlrpclib to not bork on invalid UTF-8 XML response from Jira's
   XML-RPC API. Side-effect is that an invalid text field will have decode errors
   replaced with '?'.

@@ -42,7 +42,6 @@ class JiraShellError(Exception):
 def _decode(data, encoding, is8bit=re.compile("[\x80-\xff]").search):
     # decode non-ascii string (if possible)
     if unicode and encoding and is8bit(data):
-        print "XXX _decode(%r)" % data
         data = unicode(data, encoding, 'replace')
     return data
 xmlrpclib._decode = _decode
