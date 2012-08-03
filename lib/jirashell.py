@@ -20,7 +20,12 @@ import codecs
 import operator
 import webbrowser
 import re
+import warnings
 
+warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
+
+TOP = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0, os.path.join(TOP, "deps"))
 import cmdln
 
 
@@ -51,12 +56,45 @@ xmlrpclib._decode = _decode
 
 class Jira(object):
     def __init__(self, jira_url, username, password):
+        self.jira_url = jira_url
+        self.username = username
+        self.password = password
         self.server = xmlrpclib.ServerProxy(jira_url + '/rpc/xmlrpc',
             verbose=False)
         self.auth = self.server.jira1.login(username, password)
         # WARNING: if we allow a longer jira shell session, then caching
         # might need invalidation.
         self.cache = {}
+
+    _soap_server = None
+    _soap_auth = None
+    def _get_soap_server(self):
+        import SOAPpy
+        from StringIO import StringIO
+        if not self._soap_server:
+            soap_url = self.jira_url + '/rpc/soap/jirasoapservice-v2?wsdl'
+            try:
+                oldStdout = sys.stdout
+                sys.stdout = StringIO()   # trap log output from WSDL parsing
+                self._soap_server = SOAPpy.WSDL.Proxy(soap_url)
+            finally:
+                sys.stdout = oldStdout
+            self._soap_auth = self._soap_server.login(
+                self.username, self.password)
+        return self._soap_server, self._soap_auth
+
+    def _jira_soap_call(self, methodName, args):
+        server, auth = self._get_soap_server()
+        authedArgs = [auth] + args
+        out = getattr(server, methodName)(*authedArgs)
+        typeName = out._typeName()
+        if typeName == "struct":
+            return out._asdict()
+        elif typeName == "typedArray":
+            outList = [item._asdict() for item in out._aslist()]
+            return outList
+        else:
+            raise JiraShellError("unknown SOAPpy outparam type: '%s'" % typeName)
 
     def filters(self):
         if "filters" not in self.cache:
@@ -264,6 +302,14 @@ class Jira(object):
             raise JiraShellError("no resolution found matching %r" % name)
         return resolutionObj["id"]
 
+    def resolve(self, key):
+        """Resolve the given issue.
+
+        TODO: what is the result when the workflow change is illegal?
+        """
+        # 5 === "Resolved". Is that true for all Jiras?
+        res = self._jira_soap_call("progressWorkflowAction", [key, "5"])
+
     def statuses(self):
         if "statuses" not in self.cache:
             self.cache["statuses"] = self.server.jira1.getStatuses(self.auth)
@@ -294,8 +340,10 @@ class Jira(object):
         return self.server.jira1.createIssue(self.auth, data)
 
     def update_issue(self, key, data):
+        # Actual helpful docs on updateIssue():
+        # https://jira.atlassian.com/browse/JRA-10588
         if log.isEnabledFor(logging.DEBUG):
-            log.debug("calling createIssue(%r, %s)", key, json.dumps(data))
+            log.debug("calling updateIssue(%r, %s)", key, json.dumps(data))
         return self.server.jira1.updateIssue(self.auth, key, data)
 
 
@@ -640,41 +688,31 @@ class JiraShell(cmdln.Cmdln):
             url = "%s/browse/%s" % (self.jira_url, issue["key"])
             webbrowser.open(url)
 
+    def _do_soap(self, subcmd, opts):
+        res = self.jira._jira_soap_call("getIssue", ["MON-113"])
+        #res = self.jira._jira_soap_call("progressWorkflowAction",
+        #    ["TOOLS-158", "5"])   # 5 === "Resolved"
+        pprint(res)
+
     #@cmdln.option("-r", "--resolution",
     #    help="Resolution. Default is 'fixed'. See `jira resolutions`. The "
     #        "given value can be a resolution id, name or unique name "
     #        "substring.")
-    #def do_resolve(self, subcmd, opts, key):
-    #    """Resolve an issue.
-    #
-    #    Usage:
-    #        ${cmd_name} ISSUE-KEY
-    #
-    #    ${cmd_option_list}
-    #    """
-    #    issue = self.jira.issue(key)
-    #    pprint(issue)
-    #    del issue["id"]
-    #    del issue["key"]
-    #    del issue["reporter"]
-    #
-    #    # Actual helpful docs on updateIssue():
-    #    # https://jira.atlassian.com/browse/JRA-10588
-    #    del issue["project"]
-    #    del issue["created"]
-    #
-    #    issue["resolution"] = self.jira.resolution_id(
-    #        opts.resolution or "fixed")
-    #
-    #    changes = {
-    #        "resolution": [issue["resolution"]],
-    #        "summary": [issue["summary"] + "2"],
-    #        "status": [self.jira.status_id("resolved")],
-    #    }
-    #    pprint(changes)
-    #    updated = self.jira.update_issue(key, changes)
-    #    print "updated:", self._issue_repr_flat(updated)
+    def do_resolve(self, subcmd, opts, key):
+        """Resolve an issue.
 
+        Limitation: AFAICT there is no way to *set* to resolution (i.e.
+        "Fixed" vs "Won't Fix" ... `jirash resolutions`) via the Jira API,
+        so there is no option for that here.
+
+        Usage:
+            ${cmd_name} ISSUE-KEY
+
+        ${cmd_option_list}
+        """
+        self.jira.resolve(key)
+        issue = self.jira.issue(key)
+        print "updated:", self._issue_repr_flat(issue)
 
     def _issue_repr_flat(self, issue):
         try:
@@ -756,7 +794,6 @@ def query_multiline(question):
         lines.append(line.decode('utf-8'))
     answer = '\n'.join(lines)
     return answer
-
 
 
 #---- mainline

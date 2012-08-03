@@ -2,6 +2,8 @@
 
 # 1.1.0
 
+- `jirash resolve FOO-123` No support for setting the resolution (e.g. "Fixed"
+  vs. "Won't Fix") because that's not possible via the Jira APIs.
 - `jirash resolutions`
 - Monkey-patch xmlrpclib to not bork on invalid UTF-8 XML response from Jira's
   XML-RPC API. Side-effect is that an invalid text field will have decode errors

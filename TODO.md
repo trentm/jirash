@@ -1,10 +1,13 @@
 # todo
 
-- resolve a ticket (need to figure out custom fields, e.g. Fixed in Version/s???):
-  Attempt to use this to change the status:
-    http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/soap/JiraSoapService.html#progressWorkflowAction%28java.lang.String,%20java.lang.String,%20java.lang.String,%20com.atlassian.jira.rpc.soap.beans.RemoteFieldValue[]%29
-  per comment at:
-    http://old.nabble.com/-JIRA-user--changing-status,-resolution-via-xmlrpc-%28Perl%29-td4973454.html
+- add "jirash comment KEY", and -m option (or following args?) on resolve:
+        jirash resolve FOO-123 because this is what I did
+        jirash resolve FOO-123 -m "because this is what I did"
+        jirash resolve FOO-123 -m -
+        Comment ('.' to finish):
+        because this is what I did
+        .
+  test ticket: TOOLS-158
 - tab complete for project names
 - http caching and perhaps more aggresive (e.g. for project names and users)
 - add '-c component' to createissue
