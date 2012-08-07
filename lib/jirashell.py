@@ -670,12 +670,15 @@ class JiraShell(cmdln.Cmdln):
         data["summary"] = summary
 
         if not opts.assignee:
-            data["assignee"] = query(
+            assignee = query(
                 "Assignee (blank for default, 'me' for yourself)")
         else:
-            data["assignee"] = opts.assignee
-        if data["assignee"] == "me":
-            data["assignee"] = self.cfg[self.jira_url]["username"]
+            assignee = opts.assignee
+        if assignee:
+            if assignee == "me":
+                data["assignee"] = self.cfg[self.jira_url]["username"]
+            else:
+                data["assignee"] = assignee
 
         if not opts.description:
             data["description"] = query_multiline("Description")
