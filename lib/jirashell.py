@@ -664,10 +664,10 @@ class JiraShell(cmdln.Cmdln):
         }
 
         if summary:
-            summary = ' '.join(summary)
+            summary = u' '.join(summary)
         else:
             summary = query("Summary")
-        data["summary"] = summary
+        data["summary"] = summary.encode('utf-8')
 
         if not opts.assignee:
             assignee = query(
@@ -681,9 +681,9 @@ class JiraShell(cmdln.Cmdln):
                 data["assignee"] = assignee
 
         if not opts.description:
-            data["description"] = query_multiline("Description")
+            data["description"] = query_multiline("Description").encode('utf-8')
         else:
-            data["description"] = opts.description
+            data["description"] = opts.description.encode('utf-8')
 
         issue = self.jira.create_issue(data)
         print "created:", self._issue_repr_flat(issue)
