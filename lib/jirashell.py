@@ -795,7 +795,7 @@ def query_multiline(question):
         if line.rstrip() == '.':
             break
         lines.append(line.decode('utf-8'))
-    answer = '\n'.join(lines)
+    answer = u'\n'.join(lines)
     return answer
 
 
