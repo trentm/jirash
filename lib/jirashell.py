@@ -28,6 +28,14 @@ TOP = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0, os.path.join(TOP, "deps"))
 import cmdln
 
+# This is a total hack for <https://github.com/trentm/jirash/issues/2>.
+# It ensures that utf-8 is used for implicit string conversion deep
+# in httplib.py for Python 2.7 (which changed from 2.6 resulting in
+# that conversion).
+if sys.version_info >= (2, 7):
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+
 
 
 #---- globals and config
@@ -732,9 +740,10 @@ class JiraShell(cmdln.Cmdln):
                 for cid in component_ids)
 
         if not opts.description:
-            data["description"] = query_multiline("Description").encode('utf-8')
+            description = query_multiline("Description")
         else:
-            data["description"] = opts.description.encode('utf-8')
+            description = opts.description
+        data["description"] = description.encode('utf-8')
 
         issue = self.jira.create_issue(data)
         print "created:", self._issue_repr_flat(issue)
@@ -883,13 +892,15 @@ if __name__ == "__main__":
         print()
         traceback.print_exc()
         print("""
+Python: %s
+OS: %s
+
 * * * * * * * * * * * * * * * * * * * * * * * *
 * Please log a bug at                         *
 *    https://github.com/trentm/jirash/issues  *
 * to report this error. Thanks!               *
 * -- Trent                                    *
-* * * * * * * * * * * * * * * * * * * * * * * *""")
+* * * * * * * * * * * * * * * * * * * * * * * *""" % (sys.version, os.uname()))
         sys.exit(1)
     else:
         sys.exit(retval)
-## end of http://code.activestate.com/recipes/577258/ }}}

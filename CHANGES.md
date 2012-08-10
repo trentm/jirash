@@ -2,6 +2,8 @@
 
 # 1.1.0
 
+- [issue #2] Hack to avoid UnicodeDecodeError in implicit str + unicode addition
+  in Python 2.7's httplib.py.
 - [issue #3] Add '-c COMPONENT' option to `jirash createissue`. Necessary because
   some projects require a component.
 - [issue #1] Fix create issue with no given assignee
