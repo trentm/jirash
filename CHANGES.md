@@ -2,6 +2,8 @@
 
 # 1.1.0
 
+- [issue #3] Add '-c COMPONENT' option to `jirash createissue`. Necessary because
+  some projects require a component.
 - [issue #1] Fix create issue with no given assignee
 - `jirash resolve FOO-123` No support for setting the resolution (e.g. "Fixed"
   vs. "Won't Fix") because that's not possible via the Jira APIs.

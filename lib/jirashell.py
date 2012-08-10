@@ -232,9 +232,13 @@ class Jira(object):
             raise JiraShellError("unknown issue type: %r" % issue_id)
 
     def components(self, project_key):
-        components = self.server.jira1.getComponents(self.auth, project_key)
-        components.sort(key=operator.itemgetter("name"))
-        return components
+        if "components" not in self.cache:
+            self.cache["components"] = {}
+        if project_key not in self.cache["components"]:
+            components = self.server.jira1.getComponents(self.auth, project_key)
+            components.sort(key=operator.itemgetter("name"))
+            self.cache["components"][project_key] = components
+        return self.cache["components"][project_key]
 
     def component(self, project_key, component_id):
         assert isinstance(component_id, str)
@@ -243,6 +247,41 @@ class Jira(object):
                 return c
         else:
             raise JiraShellError("unknown component id: %r" % component_id)
+
+    def component_id(self, project_key, name):
+        """Return the project component id from the given id, name, or unique
+        substring match on the name.
+        """
+        componentObj = None
+        components = self.components(project_key)
+        name_lower = name.lower()
+        # - if int, then try id match first
+        if isinstance(name, int):
+            for r in components:
+                if int(r["id"]) == name:
+                    componentObj = r
+                    break
+            else:
+                raise JiraShellError("no component with id %r" % name)
+        if not componentObj:
+            # - try full name match
+            for r in components:
+                if r["name"].lower() == name_lower:
+                    componentObj = r
+                    break
+        if not componentObj:
+            # - try substring match
+            matches = [r for r in components
+                if name_lower in r["name"].lower()]
+            if len(matches) == 1:
+                componentObj = matches[0]
+            elif len(matches) > 1:
+                raise JiraShellError(
+                    "'%s' is ambiguous: matching components: \"%s\"" % (
+                    name, '", "'.join([r["name"] for r in matches])))
+        if not componentObj:
+            raise JiraShellError("no component found matching %r" % name)
+        return componentObj["id"]
 
     def versions(self, project_key, exclude_archived=None,
             exclude_released=None):
@@ -644,7 +683,10 @@ class JiraShell(cmdln.Cmdln):
     @cmdln.option("-d", "--description",
         help="issue description. If not given, this will prompt.")
     @cmdln.option("-a", "--assignee",
-        help="Assignee username. (XXX Don't have a good way to list available usernames right now.)")
+        help="Assignee username. Note that this is the username field, NOT their full name. (XXX Don't have a good way to list available usernames right now.)")
+    @cmdln.option("-c", "--component", dest="components", action="append",
+        metavar="COMPONENT",
+        help="Component id or substring match. Use `jirash components PROJ` to list them. Some Jira projects require a component and don't have a default, but jirash can't detect that so doesn't know when to require a component.")
     @cmdln.option("-B", "--no-browse", action="store_true",
         help="Do *not* attempt to open the browser to the created issue.")
     def do_createissue(self, subcmd, opts, project_key, *summary):
@@ -665,6 +707,7 @@ class JiraShell(cmdln.Cmdln):
 
         if summary:
             summary = u' '.join(summary)
+            print u"Summary: %s" % summary
         else:
             summary = query("Summary")
         data["summary"] = summary.encode('utf-8')
@@ -679,6 +722,14 @@ class JiraShell(cmdln.Cmdln):
                 data["assignee"] = self.cfg[self.jira_url]["username"]
             else:
                 data["assignee"] = assignee
+
+        if opts.components:
+            component_ids = [self.jira.component_id(project_key, s)
+                for s in opts.components]
+            data["components"] = [{"id": cid} for cid in component_ids]
+            print "Components: %s" % ', '.join(
+                self.jira.component(project_key, cid)["name"]
+                for cid in component_ids)
 
         if not opts.description:
             data["description"] = query_multiline("Description").encode('utf-8')
