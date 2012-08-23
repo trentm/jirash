@@ -1,6 +1,11 @@
 # jirash Changelog
 
-# 1.1.0
+## 1.2.0
+
+- `jirash priorities`
+
+
+## 1.1.0
 
 - [issue #2] Hack to avoid UnicodeDecodeError in implicit str + unicode addition
   in Python 2.7's httplib.py.
@@ -25,6 +30,6 @@
 - `jirash user USERNAME`
 
 
-# 1.0.0
+## 1.0.0
 
 (first version)

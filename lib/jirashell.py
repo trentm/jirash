@@ -7,7 +7,7 @@
 # <http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html>
 #
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 import os
 import sys
@@ -474,6 +474,24 @@ class JiraShell(cmdln.Cmdln):
             print template % ("ID", "AUTHOR", "NAME")
             for f in filters:
                 print template % (f["id"], f["author"], f["name"])
+
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_priorities(self, subcmd, opts):
+        """List all issue priorities.
+
+        Usage:
+            ${cmd_name}
+
+        ${cmd_option_list}
+        """
+        priorities = self.jira.priorities()
+        if opts.json:
+            print json.dumps(priorities, indent=2)
+        else:
+            template = "%-3s  %-8s  %s"
+            print template % ("ID", "NAME", "DESCRIPTION")
+            for p in priorities:
+                print template % (p["id"], p["name"], p["description"])
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_statuses(self, subcmd, opts):
