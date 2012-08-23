@@ -576,9 +576,14 @@ class JiraShell(cmdln.Cmdln):
         help="Project key(s) to which to limit a text search")
     @cmdln.option("-u", "--url", action="store_true",
         help="Include a URL column in output.")
+    @cmdln.option("-l", "--long", action="store_true", help="Long output")
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issues(self, subcmd, opts, *terms):
         """List issues from a filter (saved search) or text search.
+
+        By default not all data on each ticket is displayed to try to
+        keep the width of the table small. Use '-l' for more data. Use
+        '-j' for all data.
 
         Usage:
             ${cmd_name} TERMS...
@@ -617,11 +622,7 @@ class JiraShell(cmdln.Cmdln):
                 url_width = len(url_base) + 11   # 11 chars for key
                 url_template = "%%-%ds  " % url_width
                 sys.stdout.write(url_template % "URL")
-            print self._issue_row_template % self._issue_columns
-            for issue in issues:
-                if opts.url:
-                    sys.stdout.write(url_template % (url_base + issue["key"]))
-                print self._issue_repr_tabular(issue)
+            self._print_issue_table(issues, long_format=opts.long)
 
     def default(self, argv):
         key_re = re.compile(r'^\b[A-Z]+\b-\d+$')
@@ -795,6 +796,66 @@ class JiraShell(cmdln.Cmdln):
         issue = self.jira.issue(key)
         print "updated:", self._issue_repr_flat(issue)
 
+    def _print_issue_table(self, issues, long_format=False):
+        if long_format:
+            template = "%-11s  %-8s  %-8s  %-11s  %-10s  %-10s  %s"
+            columns = ("KEY", "PRIO", "STATUS", "TYPE", "REPORTER",
+                "ASSIGNEE", "SUMMARY")
+            print template % columns
+            for issue in issues:
+                try:
+                    try:
+                        issue_type = self.jira.issue_type(issue["type"])["name"]
+                    except JiraShellError, e:
+                        # The issue type may have been removed. Just use the id.
+                        issue_type = issue["type"]
+                    priority = self.jira.priority(issue["priority"])
+                    status = self.jira.status(issue["status"])
+                    print template % (
+                        issue["key"],
+                        priority["name"],
+                        clip(status["name"], 8),
+                        clip(issue_type, 11),
+                        clip(issue["reporter"], 10),
+                        clip(issue.get("assignee", "unassigned"), 10),
+                        issue["summary"],
+                    )
+                except Exception, e:
+                    log.error("error making issue repr: %s (issue=%r)",
+                        e, issue)
+                    raise
+        else:
+            key_width = max(len(i["key"]) for i in issues)
+            template = "%%-%ds  %%-13s  %%-8s  %%s" % key_width
+            term_width = getTerminalSize()[1]
+            summary_width = term_width - key_width - 2 - 13 - 2 - 8 - 2
+            columns = ("KEY", "STATE", "ASSIGNEE", "SUMMARY")
+            print template % columns
+            for issue in issues:
+                try:
+                    try:
+                        issue_type = self.jira.issue_type(issue["type"])["name"]
+                    except JiraShellError, e:
+                        # The issue type may have been removed. Just use the id.
+                        issue_type = issue["type"]
+                    priority = self.jira.priority(issue["priority"])
+                    status = self.jira.status(issue["status"])
+                    state = "%s/%s/%s" % (
+                        clip(priority["name"], 4, False),
+                        clip(status["name"].replace(' ', ''), 4, False),
+                        clip(issue_type, 3, False))
+                    print template % (
+                        issue["key"],
+                        state,
+                        clip(issue.get("assignee", "unassigned"), 8),
+                        #issue["summary"],
+                        clip(issue["summary"], summary_width),
+                    )
+                except Exception, e:
+                    log.error("error making issue repr: %s (issue=%r)",
+                        e, issue)
+                    raise
+
     def _issue_repr_flat(self, issue):
         try:
             try:
@@ -816,41 +877,48 @@ class JiraShell(cmdln.Cmdln):
             log.error("error making issue repr: %s (issue=%r)", e, issue)
             raise
 
-    _issue_columns = ("KEY", "PRIO", "STATUS", "TYPE", "REPORTER",
-        "ASSIGNEE", "SUMMARY")
-    _issue_row_template = "%-11s  %-8s  %-8s  %-11s  %-10s  %-10s  %s"
-    def _issue_repr_tabular(self, issue):
-        def clip(s, length):
-            if len(s) > length:
-                if sys.stdout.encoding not in (None, 'ascii'):
-                    s = s[:length-1] + u'\u2026'
-                else:
-                    s = s[:length-3] + '...'
-            return s
-        try:
-            try:
-                issue_type = self.jira.issue_type(issue["type"])["name"]
-            except JiraShellError, e:
-                # The issue type may have been removed. Just use the id.
-                issue_type = issue["type"]
-            priority = self.jira.priority(issue["priority"])
-            status = self.jira.status(issue["status"])
-            return self._issue_row_template % (
-                issue["key"],
-                priority["name"],
-                clip(status["name"], 8),
-                clip(issue_type, 11),
-                clip(issue["reporter"], 10),
-                clip(issue.get("assignee", "unassigned"), 10),
-                issue["summary"],
-            )
-        except Exception, e:
-            log.error("error making issue repr: %s (issue=%r)", e, issue)
-            raise
-
 
 
 #---- support stuff
+
+# http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
+# with a tweak.
+def getTerminalSize():
+    import os
+    env = os.environ
+    def ioctl_GWINSZ(fd):
+        try:
+            import fcntl, termios, struct, os
+            cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+        except:
+            return None
+        return cr[1], cr[0]
+    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
+    if not cr:
+        try:
+            fd = os.open(os.ctermid(), os.O_RDONLY)
+            cr = ioctl_GWINSZ(fd)
+            os.close(fd)
+        except:
+            pass
+    if not cr:
+        try:
+            cr = (env['LINES'], env['COLUMNS'])
+        except:
+            cr = (25, 80)
+    return int(cr[1]), int(cr[0])
+
+
+def clip(s, length, ellipsis=True):
+    if len(s) > length:
+        if ellipsis:
+            if sys.stdout.encoding not in (None, 'ascii'):
+                s = s[:length-1] + u'\u2026'
+            else:
+                s = s[:length-3] + '...'
+        else:
+            s = s[:length]
+    return s
 
 ## {{{ http://code.activestate.com/recipes/577099/ (r1)
 def query(question, default=None):

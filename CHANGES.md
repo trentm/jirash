@@ -2,6 +2,8 @@
 
 ## 1.2.0
 
+- `jirash issues ...` outputs with tighter representation to fit in console
+  width. Use `-l, --long` for more fields and wider output.
 - `jirash priorities`
 
 
