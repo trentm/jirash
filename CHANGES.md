@@ -1,5 +1,11 @@
 # jirash Changelog
 
+## 1.3.0
+
+- '-o' flag to 'jirash issues' to include open tickets, but NOT just "Open". Also
+  include "Reopened" and "In Progress".
+- Fix case-insensitive searching of statuses in 'jirash issues -s ...'.
+
 ## 1.2.0
 
 - `jirash issues ...` outputs with tighter representation to fit in console

@@ -7,7 +7,7 @@
 # <http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html>
 #
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 import os
 import sys
@@ -378,7 +378,7 @@ class Jira(object):
         statuses = self.statuses()
         name_lower = name.lower()
         for s in statuses:
-            if name == s["name"].lower():
+            if name_lower == s["name"].lower():
                 return s["id"]
         else:
             raise JiraShellError("unknown status name: %r" % name)
@@ -572,6 +572,11 @@ class JiraShell(cmdln.Cmdln):
     @cmdln.option("-s", "--status", action="append", dest="statuses",
         help="Limit to issues with the given status string, e.g. 'open'. "
             "Can be specified multiple times.")
+    @cmdln.option("-o", "--open", action="store_true",
+        help="Limit to open issues, where open here is a shortcut for "
+            "`-o 'Open' -o 'In Progress' -o 'Reopened'`. Note: This might "
+            "be Joyent-specific. If so, please let me know and I'll make "
+            "this configurable.")
     @cmdln.option("-p", "--project", action="append", dest="project_keys",
         help="Project key(s) to which to limit a text search")
     @cmdln.option("-u", "--url", action="store_true",
@@ -599,7 +604,11 @@ class JiraShell(cmdln.Cmdln):
             if terms:
                 log.warn("ignoring search terms for a *filter* search: '%s'",
                     "', '".join(terms))
-            issues = self.jira.issues_from_filter(opts.filter)
+            try:
+                issues = self.jira.issues_from_filter(opts.filter)
+            except JiraShellError, e:
+                log.error(e)
+                return 1
         elif not terms:
             log.error("no search terms given")
             return 1
@@ -610,8 +619,13 @@ class JiraShell(cmdln.Cmdln):
             issues = self.jira.issues_from_search(terms,
                 project_keys=opts.project_keys)
 
+        status_ids = []
         if opts.statuses:
-            status_ids = [self.jira.status_id(name) for name in opts.statuses]
+            status_ids += [self.jira.status_id(name) for name in opts.statuses]
+        if opts.open:
+            status_ids += [self.jira.status_id(name)
+                for name in ["Open", "In Progress", "Reopened"]]
+        if status_ids:
             issues = [i for i in issues if i["status"] in status_ids]
 
         if opts.json:
@@ -825,12 +839,13 @@ class JiraShell(cmdln.Cmdln):
                         e, issue)
                     raise
         else:
-            key_width = max(len(i["key"]) for i in issues)
-            template = "%%-%ds  %%-13s  %%-8s  %%s" % key_width
-            term_width = getTerminalSize()[1]
-            summary_width = term_width - key_width - 2 - 13 - 2 - 8 - 2
-            columns = ("KEY", "STATE", "ASSIGNEE", "SUMMARY")
-            print template % columns
+            if issues:
+                key_width = max(len(i["key"]) for i in issues)
+                template = "%%-%ds  %%-13s  %%-8s  %%s" % key_width
+                term_width = getTerminalSize()[1]
+                summary_width = term_width - key_width - 2 - 13 - 2 - 8 - 2
+                columns = ("KEY", "STATE", "ASSIGNEE", "SUMMARY")
+                print template % columns
             for issue in issues:
                 try:
                     try:
