@@ -9,6 +9,12 @@
 
 __version__ = "1.3.0"
 
+import warnings
+warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
+# Ignore this:
+#   /opt/local/lib/python2.6/xmlrpclib.py:612: DeprecationWarning: The xmllib module is obsolete.  
+warnings.filterwarnings("ignore", module="xmlrpclib", lineno=612)
+
 import os
 import sys
 import logging
@@ -20,9 +26,6 @@ import codecs
 import operator
 import webbrowser
 import re
-import warnings
-
-warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
 
 TOP = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0, os.path.join(TOP, "deps"))
@@ -48,6 +51,10 @@ log = logging.getLogger("jirash")
 
 class JiraShellError(Exception):
     pass
+
+class JiraShellUsageError(JiraShellError):
+    pass
+
 
 
 #---- monkey-patching
@@ -77,6 +84,17 @@ class Jira(object):
     _soap_server = None
     _soap_auth = None
     def _get_soap_server(self):
+        try:
+            import pyexpat
+        except ImportError:
+            msg = ("Your Python (%s) doesn't have the 'pyexpat' module "
+                "needed to call the Jira SOAP API. You must install that "
+                "and retry." % sys.executable)
+            how = howto_install_pyexpat()
+            if how:
+                msg += " You could try `%s`." % how
+            raise JiraShellUsageError(msg)
+        XXX
         import SOAPpy
         from StringIO import StringIO
         if not self._soap_server:
@@ -896,6 +914,16 @@ class JiraShell(cmdln.Cmdln):
 
 #---- support stuff
 
+def howto_install_pyexpat():
+    """Return a short suggestion string for installing pyexpat on
+    the current OS. Or None if no suggestion.
+    """
+    pyver = "%d.%d" % tuple(sys.version_info[0:2])
+    if sys.platform.startswith("sunos"):
+        if os.path.exists("/opt/local/etc/pkg_install.conf"):
+            return "pkgin -y py%s-expat" % pyver
+
+
 # http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
 # with a tweak.
 def getTerminalSize():
@@ -988,9 +1016,12 @@ if __name__ == "__main__":
         sys.exit(1)
     except SystemExit:
         raise
+    except JiraShellUsageError, ex:
+        print("error: %s" % ex)
+        sys.exit(1)
     except:
         import traceback
-        print()
+        print("")
         traceback.print_exc()
         print("""
 Python: %s
