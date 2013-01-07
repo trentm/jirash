@@ -12,7 +12,7 @@ __version__ = "1.3.0"
 import warnings
 warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
 # Ignore this:
-#   /opt/local/lib/python2.6/xmlrpclib.py:612: DeprecationWarning: The xmllib module is obsolete.  
+#   /opt/local/lib/python2.6/xmlrpclib.py:612: DeprecationWarning: The xmllib module is obsolete.
 warnings.filterwarnings("ignore", module="xmlrpclib", lineno=612)
 
 import os
@@ -859,9 +859,9 @@ class JiraShell(cmdln.Cmdln):
         else:
             if issues:
                 key_width = max(len(i["key"]) for i in issues)
-                template = "%%-%ds  %%-13s  %%-8s  %%s" % key_width
+                template = "%%-%ds  %%-13s  %%-10s  %%s" % key_width
                 term_width = getTerminalSize()[1]
-                summary_width = term_width - key_width - 2 - 13 - 2 - 8 - 2
+                summary_width = term_width - key_width - 2 - 13 - 2 - 10 - 2
                 columns = ("KEY", "STATE", "ASSIGNEE", "SUMMARY")
                 print template % columns
             for issue in issues:
@@ -880,7 +880,7 @@ class JiraShell(cmdln.Cmdln):
                     print template % (
                         issue["key"],
                         state,
-                        clip(issue.get("assignee", "unassigned"), 8),
+                        clip(issue.get("assignee", "unassigned"), 10),
                         #issue["summary"],
                         clip(issue["summary"], summary_width),
                     )
