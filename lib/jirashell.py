@@ -597,8 +597,6 @@ class JiraShell(cmdln.Cmdln):
             "this configurable.")
     @cmdln.option("-p", "--project", action="append", dest="project_keys",
         help="Project key(s) to which to limit a text search")
-    @cmdln.option("-u", "--url", action="store_true",
-        help="Include a URL column in output.")
     @cmdln.option("-l", "--long", action="store_true", help="Long output")
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issues(self, subcmd, opts, *terms):
@@ -649,11 +647,6 @@ class JiraShell(cmdln.Cmdln):
         if opts.json:
             print json.dumps(issues, indent=2)
         else:
-            if opts.url:
-                url_base = self.jira_url + '/browse/'
-                url_width = len(url_base) + 11   # 11 chars for key
-                url_template = "%%-%ds  " % url_width
-                sys.stdout.write(url_template % "URL")
             self._print_issue_table(issues, long_format=opts.long)
 
     def default(self, argv):
