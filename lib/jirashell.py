@@ -94,7 +94,6 @@ class Jira(object):
             if how:
                 msg += " You could try `%s`." % how
             raise JiraShellUsageError(msg)
-        XXX
         import SOAPpy
         from StringIO import StringIO
         if not self._soap_server:

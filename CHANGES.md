@@ -2,6 +2,7 @@
 
 ## 1.3.0
 
+- [issue #8] Remove debugging 'XXX' left in from #6 work.
 - [issue #6] Better error handling for running with a Python that doesn't
   have pyexpat installed (and only when needed for Jira SOAP API calls).
 - '-o' flag to 'jirash issues' to include open tickets, but NOT just "Open". Also
