@@ -851,7 +851,7 @@ class JiraShell(cmdln.Cmdln):
         else:
             if issues:
                 key_width = max(len(i["key"]) for i in issues)
-                template = "%%-%ds  %%-13s  %%-10s  %%s" % key_width
+                template = u"%%-%ds  %%-13s  %%-10s  %%s" % key_width
                 term_width = getTerminalSize()[1]
                 summary_width = term_width - key_width - 2 - 13 - 2 - 10 - 2
                 columns = ("KEY", "STATE", "ASSIGNEE", "SUMMARY")
@@ -869,13 +869,13 @@ class JiraShell(cmdln.Cmdln):
                         clip(priority["name"], 4, False),
                         clip(status["name"].replace(' ', ''), 4, False),
                         clip(issue_type, 3, False))
-                    print template % (
+                    safeprint(template % (
                         issue["key"],
                         state,
                         clip(issue.get("assignee", "unassigned"), 10),
                         #issue["summary"],
                         clip(issue["summary"], summary_width),
-                    )
+                    ))
                 except Exception, e:
                     log.error("error making issue repr: %s (issue=%r)",
                         e, issue)
@@ -942,6 +942,12 @@ def getTerminalSize():
         except:
             cr = (25, 80)
     return int(cr[1]), int(cr[0])
+
+
+def safeprint(s, stream=sys.stdout):
+    if stream.encoding in (None, 'ascii'):
+        s = s.encode('ascii', 'replace')
+    print s
 
 
 def clip(s, length, ellipsis=True):
