@@ -85,3 +85,8 @@ date (i.e. there are probably more supported commands in the latest).
     TOOLS-150    Normal    Open      New Feature  linda       trent.mick  add sdc-vminfo to operator tools
     TOOLS-143    Normal    Open      Bug          laurel      orlando     Be more tolerant of the location of the VirtualSystem location
     ...
+
+
+# License
+
+MIT. See the [LICENSE.txt file](./LICENSE.txt).
