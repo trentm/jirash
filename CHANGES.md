@@ -2,6 +2,9 @@
 
 ## 1.3.1
 
+- [issue #13] Align column headers in output of 'projects' and 'user' subcommands.
+  By <https://github.com/jacques>.
+
 - [issue #11] Prompt for user password if not in "~/.jirash.json" file. I.e.
   you don't have to save your password in a text file. By
   <https://github.com/jschauma>.
