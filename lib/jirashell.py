@@ -566,9 +566,12 @@ class JiraShell(cmdln.Cmdln):
         elif opts.json:
             print json.dumps(user, indent=2)
         else:
-            template = "%-15s  %-20s  %s"
+            template = "%-20s  %-20s  %s"
             print template % ("NAME", "FULLNAME", "EMAIL")
-            print template % (user["name"], user["fullname"], user["email"])
+            print template % (
+                clip(user["name"], 20),
+                clip(user["fullname"], 20),
+                user["email"])
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issue(self, subcmd, opts, key):
