@@ -1,5 +1,9 @@
 # jirash Changelog
 
+## 1.3.1
+
+- [issue #13] Align column headers in output
+
 ## 1.3.0
 
 - [issue #8] Remove debugging 'XXX' left in from #6 work.
