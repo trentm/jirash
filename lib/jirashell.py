@@ -472,7 +472,11 @@ class JiraShell(cmdln.Cmdln):
             template = "%-10s  %-32s  %s"
             print template % ("KEY", "NAME", "LEAD")
             for p in projects:
-                print template % (p["key"], p["name"], p["lead"])
+                print template % (
+                    clip(p["key"], 10),
+                    clip(p["name"], 32),
+                    p["lead"]
+                )
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_filters(self, subcmd, opts):
