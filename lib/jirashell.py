@@ -7,7 +7,7 @@
 # <http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html>
 #
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 import warnings
 warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
