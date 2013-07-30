@@ -1,5 +1,14 @@
 # jirash Changelog
 
+## 1.3.1
+
+- [issue #11] Prompt for user password if not in "~/.jirash.json" file. I.e.
+  you don't have to save your password in a text file. By
+  <https://github.com/jschauma>.
+
+  TODO: Really should support <https://pypi.python.org/pypi/keyring>. Pull
+  request (hint hint).
+
 ## 1.3.0
 
 - [issue #8] Remove debugging 'XXX' left in from #6 work.

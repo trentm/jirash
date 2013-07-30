@@ -7,7 +7,7 @@
 # <http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html>
 #
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 import warnings
 warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
@@ -15,6 +15,7 @@ warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
 #   /opt/local/lib/python2.6/xmlrpclib.py:612: DeprecationWarning: The xmllib module is obsolete.
 warnings.filterwarnings("ignore", module="xmlrpclib", lineno=612)
 
+import getpass
 import os
 import sys
 import logging
@@ -447,6 +448,9 @@ class JiraShell(cmdln.Cmdln):
             sys.exit(0)
         self.cfg = self._load_cfg()
         self.jira_url = self.options.jira_url or self.cfg["jira_url"]
+        if not self.cfg[self.jira_url].has_key("password"):
+            prompt = "Jira (%s) password: " % self.jira_url
+            self.cfg[self.jira_url]["password"] = getpass.getpass(prompt)
 
     _jira_cache = None
     @property
@@ -1025,12 +1029,13 @@ if __name__ == "__main__":
 Python: %s
 OS: %s
 
-* * * * * * * * * * * * * * * * * * * * * * * *
-* Please log a bug at                         *
-*    https://github.com/trentm/jirash/issues  *
-* to report this error. Thanks!               *
-* -- Trent                                    *
-* * * * * * * * * * * * * * * * * * * * * * * *""" % (sys.version, os.uname()))
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* If this is obviously not user error, please log a bug at  *
+*    https://github.com/trentm/jirash/issues                *
+* to report this error. Thanks!                             *
+* -- Trent                                                  *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *""" % (
+sys.version, os.uname()))
         sys.exit(1)
     else:
         sys.exit(retval)
