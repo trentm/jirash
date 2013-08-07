@@ -87,6 +87,29 @@ date (i.e. there are probably more supported commands in the latest).
     ...
 
 
+# Configuration
+
+Configuration is via a JSON file at "~/.jirash.json". Example:
+
+    {
+      "jira_url": "https://dev.example.com/jira",
+      "https://dev.example.com/jira": {
+        "username": "joe.blow",
+        "password": "secret"
+      },
+      "open_status_names": ["Open", "In Progress", "Reopened", "Foo"]
+    }
+
+The possible config vars are:
+
+- `jira_url` Required. The base Jira URL.
+- `$jira_url.username` Required. The Jira username with which to auth.
+- `$jira_url.password` Required. The password for the given Jira username.
+- `open_status_names` Optional. A list of jira status *names* that correspond
+  to the issue being "open". This is used for the "-o, --open" option to
+  `jirash issues ...`.
+
+
 # License
 
 MIT. See the [LICENSE.txt file](./LICENSE.txt).

@@ -1,5 +1,11 @@
 # jirash Changelog
 
+## 1.3.2
+
+- [issue #16] Make the list of status names meaning "open" for `jirash issues -o` configurable
+  via "open_status_names". See <https://github.com/trentm/jirash#configuration>.
+
+
 ## 1.3.1
 
 - [issue #13] Align column headers in output of 'projects' and 'user' subcommands.
@@ -12,6 +18,7 @@
   TODO: Really should support <https://pypi.python.org/pypi/keyring>. Pull
   request (hint hint).
 
+
 ## 1.3.0
 
 - [issue #8] Remove debugging 'XXX' left in from #6 work.
@@ -20,6 +27,7 @@
 - '-o' flag to 'jirash issues' to include open tickets, but NOT just "Open". Also
   include "Reopened" and "In Progress".
 - Fix case-insensitive searching of statuses in 'jirash issues -s ...'.
+
 
 ## 1.2.0
 

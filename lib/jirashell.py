@@ -602,9 +602,9 @@ class JiraShell(cmdln.Cmdln):
             "Can be specified multiple times.")
     @cmdln.option("-o", "--open", action="store_true",
         help="Limit to open issues, where open here is a shortcut for "
-            "`-o 'Open' -o 'In Progress' -o 'Reopened'`. Note: This might "
-            "be Joyent-specific. If so, please let me know and I'll make "
-            "this configurable.")
+            "`-s 'Open' -s 'In Progress' -s 'Reopened'`. Note: Use the "
+            "'open_status_names' config var to configure the names of 'open'"
+            "statuses.")
     @cmdln.option("-p", "--project", action="append", dest="project_keys",
         help="Project key(s) to which to limit a text search")
     @cmdln.option("-l", "--long", action="store_true", help="Long output")
@@ -649,8 +649,14 @@ class JiraShell(cmdln.Cmdln):
         if opts.statuses:
             status_ids += [self.jira.status_id(name) for name in opts.statuses]
         if opts.open:
-            status_ids += [self.jira.status_id(name)
-                for name in ["Open", "In Progress", "Reopened"]]
+            open_status_names = self.cfg.get('open_status_names',
+                ["Open", "In Progress", "Reopened"])
+            status_ids = [] # TODO: cache these
+            for name in open_status_names:
+                try:
+                    status_ids.append(self.jira.status_id(name))
+                except JiraShellError, e:
+                    log.warn(e)
         if status_ids:
             issues = [i for i in issues if i["status"] in status_ids]
 
