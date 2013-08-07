@@ -102,12 +102,15 @@ Configuration is via a JSON file at "~/.jirash.json". Example:
 
 The possible config vars are:
 
-- `jira_url` Required. The base Jira URL.
+- `jira_url` The base Jira URL. This or `jirash -J <jira-url> ...` is required.
 - `$jira_url.username` Required. The Jira username with which to auth.
 - `$jira_url.password` Required. The password for the given Jira username.
 - `open_status_names` Optional. A list of jira status *names* that correspond
   to the issue being "open". This is used for the "-o, --open" option to
   `jirash issues ...`.
+- `createissue_no_browse`. Set this to `true` to not open a newly created issue
+  in the browser as part of `jirash createissue`. IOW, this is a substitute for
+  the "-B, --no-browse" option.
 
 
 # License

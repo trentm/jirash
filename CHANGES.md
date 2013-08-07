@@ -2,6 +2,9 @@
 
 ## 1.3.2
 
+- [issue #10] "createissue_no_browse" config var to skip opening newly created
+  issues in the browser.
+
 - [issue #16] Make the list of status names meaning "open" for `jirash issues -o` configurable
   via "open_status_names". See <https://github.com/trentm/jirash#configuration>.
 

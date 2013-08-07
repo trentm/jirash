@@ -807,7 +807,9 @@ class JiraShell(cmdln.Cmdln):
 
         issue = self.jira.create_issue(data)
         print "created:", self._issue_repr_flat(issue)
-        if not opts.no_browse:
+        no_browse = (opts.no_browse
+            or self.cfg.get("createissue_no_browse", False))
+        if not no_browse:
             url = "%s/browse/%s" % (self.jira_url, issue["key"])
             webbrowser.open(url)
 
