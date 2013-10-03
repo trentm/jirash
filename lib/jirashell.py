@@ -67,6 +67,15 @@ def _decode(data, encoding, is8bit=re.compile("[\x80-\xff]").search):
     return data
 xmlrpclib._decode = _decode
 
+def _isint(s):
+    try:
+        int(s)
+    except ValueError:
+        return False
+    else:
+        return True
+
+
 
 #---- Jira API
 
@@ -177,7 +186,8 @@ class Jira(object):
         filterObj = None
         filters = self.filters()
         # - if int, then try id match first
-        if isinstance(filter, int):
+        if _isint(filter):
+            filter = int(filter)
             for f in filters:
                 if int(f["id"]) == filter:
                     filterObj = f
@@ -1037,6 +1047,7 @@ if __name__ == "__main__":
         print("error: %s" % ex)
         sys.exit(1)
     except:
+        import platform
         import traceback
         print("")
         traceback.print_exc()
@@ -1050,7 +1061,7 @@ OS: %s
 * to report this error. Thanks!                             *
 * -- Trent                                                  *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *""" % (
-sys.version, os.uname()))
+sys.version, platform.platform()))
         sys.exit(1)
     else:
         sys.exit(retval)
