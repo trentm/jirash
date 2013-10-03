@@ -974,7 +974,7 @@ def getTerminalSize():
 
 
 def safeprint(s, stream=sys.stdout):
-    if stream.encoding in (None, 'ascii'):
+    if stream.encoding not in ('UTF-8',):
         s = s.encode('ascii', 'replace')
     print s
 
@@ -982,7 +982,7 @@ def safeprint(s, stream=sys.stdout):
 def clip(s, length, ellipsis=True):
     if len(s) > length:
         if ellipsis:
-            if sys.stdout.encoding not in (None, 'ascii'):
+            if sys.stdout.encoding in ('UTF-8',):
                 s = s[:length-1] + u'\u2026'
             else:
                 s = s[:length-3] + '...'
