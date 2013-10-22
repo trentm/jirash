@@ -438,12 +438,31 @@ class JiraShell(cmdln.Cmdln):
             help="Jira base URL. Otherwise defaults to 'jira_url' value from config file.")
         return parser
 
+    def _generate_cfg(self, cfg_path):
+        url      = raw_input("Jira URL: ")
+        username = raw_input("Username: ")
+        password = getpass.getpass("Password: ")
+
+        # TODO Attempt login to validate before saving
+        config = {
+            'jira_url': url,
+            url: {
+                'username': username,
+                'password': password,
+            },
+        }
+
+        f = codecs.open(cfg_path, 'w', 'utf8')
+        f.write(json.dumps(config, indent=2))
+        f.close()
+
     def _load_cfg(self, cfg_path=None):
         if not cfg_path:
             cfg_path = os.path.expanduser("~/.jirash.json")
         if not os.path.exists(cfg_path):
-            sys.stderr.write("'%s' config file does not exist" % cfg_path)
-            sys.exit(1)
+            print "This appears to be your first time running jirash, let me generate your config"
+            if self._generate_cfg(cfg_path):
+                print "Config file generated! [%s]" % cfg_path
         f = codecs.open(cfg_path, 'r', 'utf8')
         try:
             return json.load(f)
