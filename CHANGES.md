@@ -2,6 +2,11 @@
 
 ## 1.3.2
 
+- `jirash link <issue> <relation-from-linktypes> <issue>`, e.g.
+  `jirash link PROJ-123 depends on PROJ-101`, to link issues.
+
+- `jirash linktypes` to list issue link types.
+
 - [issue #10] "createissue_no_browse" config var to skip opening newly created
   issues in the browser.
 

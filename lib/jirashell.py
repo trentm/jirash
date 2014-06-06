@@ -31,6 +31,7 @@ import re
 TOP = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0, os.path.join(TOP, "deps"))
 import cmdln
+import requests
 
 # This is a total hack for <https://github.com/trentm/jirash/issues/2>.
 # It ensures that utf-8 is used for implicit string conversion deep
@@ -131,6 +132,18 @@ class Jira(object):
         else:
             raise JiraShellError("unknown SOAPpy outparam type: '%s'" % typeName)
 
+    def _jira_rest_call(self, method, path, **kwargs):
+        """Typical kwargs (from `requests`) are:
+
+        - params
+        - data
+        - headers
+        """
+        url = self.jira_url + '/rest/api/2' + path
+        r = requests.request(method, url, auth=(self.username, self.password),
+                **kwargs)
+        return r
+
     def filters(self):
         if "filters" not in self.cache:
             filters = self.server.jira1.getFavouriteFilters(self.auth)
@@ -171,7 +184,46 @@ class Jira(object):
         else:
             raise JiraShellError("unknown priority: %r" % priority_id)
 
+    def issue_link_types(self):
+        if "issue_link_types" not in self.cache:
+            res = self._jira_rest_call("GET", "/issueLinkType")
+            if res.status_code != 200:
+                raise JiraShellError("error getting issue link types: %s"
+                    % res.text)
+            self.cache["issue_link_types"] = res.json()["issueLinkTypes"]
+        return self.cache["issue_link_types"]
+
+    def link(self, link_type_name, inward_issue_key, outward_issue_key):
+        """Link issue.
+
+        E.g. making PROJ-123 a dup of PROJ-100 would be:
+            <jira>.link('Duplicate', 'PROJ-123', 'PROJ-100')
+        where 'Duplicate' is the link type "name" (as from `.link_types()`).
+        """
+        data = {
+            "type": {
+                "name": link_type_name
+            },
+            "inwardIssue": {
+                "key": inward_issue_key
+            },
+            "outwardIssue": {
+                "key": outward_issue_key
+            }
+        }
+        res = self._jira_rest_call('POST', '/issueLink',
+            headers={'content-type': 'application/json'},
+            data=json.dumps(data))
+        if res.status_code != 201:
+            raise JiraShellError('error linking (%s, %s, %s): %s %s'
+                % (link_type_name, inward_issue_key, outward_issue_key,
+                    res.status_code, res.text))
+
     def issue(self, key):
+#XXX
+#        It's right under 'issuelinks' in each issue's JSON representation. Example:
+#
+#https://jira.atlassian.com/rest/api/latest/issue/JRA-9?fields=summary,issuelinks
         return self.server.jira1.getIssue(self.auth, key)
 
     def issues_from_filter(self, filter):
@@ -707,11 +759,62 @@ class JiraShell(cmdln.Cmdln):
     #    print "XXX %r %r %r" % (test, line, start)
     #    return []
 
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_linktypes(self, subcmd, opts):
+        """List issue link types.
+
+        Usage:
+            ${cmd_name}
+
+        ${cmd_option_list}
+        """
+        types = self.jira.issue_link_types()
+        if opts.json:
+            print json.dumps(types, indent=2)
+        else:
+            template = "%-6s  %-12s  %s"
+            print template % ("ID", "NAME", "OUTWARD")
+            for t in types:
+                print template % (t["id"], t["name"], t["outward"])
+
+    #@cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_link(self, subcmd, opts, *args):
+        """Link a Jira issue to another.
+
+        Usage:
+            ${cmd_name} <issue> <relation> <issue>
+
+        ${cmd_option_list}
+        `<relation>` is a "outward" field from this Jira's issue link types
+        (list with `jirash linktypes`). A unique substring is supported as well
+
+        Examples:
+            jirash link MON-123 depends on MON-100
+            jirash link OS-2000 duplicates OS-1999
+            jirash link IMGAPI-123 dup IMGAPI-101  # "dup" is a substring
+        """
+        if len(args) < 3:
+            raise JiraShellError('not enough arguments: %s' % ' '.join(args))
+
+        link_types = self.jira.issue_link_types()
+        first = args[0]
+        reln = ' '.join(args[1:-1])
+        second = args[-1]
+        candidates = [lt for lt in link_types
+            if reln.lower() in lt["outward"].lower()]
+        if len(candidates) != 1:
+            raise JiraShellError("no unique link type match for '%s': "
+                "must match one of in '%s'"
+                % (reln, "', '".join(lt["outward"] for lt in link_types)))
+        link_type = candidates[0]
+        self.jira.link(link_type["name"], first, second)
+        print "Linked: %s %s %s" % (first, link_type["outward"], second)
+
     @cmdln.option("-p", "--project", dest="project_key",
         help="Project for which to get issue types.")
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issuetypes(self, subcmd, opts):
-        """Get an issue types (e.g. bug, task, ...).
+        """List issue types (e.g. bug, task, ...).
 
         Usage:
             ${cmd_name}
