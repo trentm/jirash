@@ -253,6 +253,12 @@ class Jira(object):
                     filterObj = f
                     break
         if not filterObj:
+            # - try full word substring match
+            for f in filters:
+                if re.search(r'\b%s\b' % filter, f["name"]):
+                    filterObj = f
+                    break
+        if not filterObj:
             # - try substring match
             for f in filters:
                 if filter in f["name"]:

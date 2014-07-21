@@ -2,6 +2,10 @@
 
 ## 1.4.0
 
+- Update `jirash issues -f FILTER` handling of FILTER to prefer a *full word*
+  match against existing filter names. E.g. A filter of "OPS" would prefer
+  the filter named "OPS: open issues" over "DCOPS: open issues".
+
 - TOOLS-525: `jirash createissue -t TYPE` to specify issue type
 
 
