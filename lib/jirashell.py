@@ -882,11 +882,22 @@ class JiraShell(cmdln.Cmdln):
     #TODO: attachments?
     @cmdln.option("-d", "--description",
         help="issue description. If not given, this will prompt.")
+    @cmdln.option("-t", "--type",
+        help="Issue type or a case-insensitive substring match against valid "
+             "issue types for the given project. This defaults to `1` for "
+             "bwcompat reasons, which "
+             "in Joyent's Jira is 'Bug'. Use `jirash issuetypes -p "
+             "PROJECT-NAME` to list valid issue types for a project.")
     @cmdln.option("-a", "--assignee",
-        help="Assignee username. Note that this is the username field, NOT their full name. (XXX Don't have a good way to list available usernames right now.)")
+        help="Assignee username. Note that this is the username field, "
+             "NOT their full name. (XXX Don't have a good way to list "
+             "available usernames right now.)")
     @cmdln.option("-c", "--component", dest="components", action="append",
         metavar="COMPONENT",
-        help="Component id or substring match. Use `jirash components PROJ` to list them. Some Jira projects require a component and don't have a default, but jirash can't detect that so doesn't know when to require a component.")
+        help="Component id or substring match. Use `jirash components PROJ` "
+             "to list them. Some Jira projects require a component and don't "
+             "have a default, but jirash can't detect that so doesn't know "
+             "when to require a component.")
     @cmdln.option("-B", "--no-browse", action="store_true",
         help="Do *not* attempt to open the browser to the created issue.")
     def do_createissue(self, subcmd, opts, project_key, *summary):
@@ -896,14 +907,38 @@ class JiraShell(cmdln.Cmdln):
             ${cmd_name} PROJECT-KEY [SUMMARY]
 
         ${cmd_option_list}
-
-        TODO:
-        - type, default to 'bug'
         """
         data = {
             "project": project_key,
-            "type": 1,   # Bug
         }
+
+        if opts.type:
+            issue_types = self.jira.issue_types(project_key=project_key)
+            # First try exact match.
+            for it in issue_types:
+                if it["name"] == opts.type:
+                    data["type"] = int(it.id)
+                    break
+            else:
+                # Try case-insensitive full match.
+                for it in issue_types:
+                    if it["name"].lower() == opts.type.lower():
+                        data["type"] = int(it.id)
+                        break
+                else:
+                    # Try case-insensitive substring match (require unique).
+                    matches = [it for it in issue_types if
+                        opts.type.lower() in it["name"].lower()]
+                    if len(matches) == 1:
+                        data["type"] = int(matches[0]["id"])
+                    else:
+                        raise JiraShellError(
+                            "no issue types for project %s match '%s', use "
+                            "`jirash issuetypes -f %s` to list valid issue "
+                            "types" % (project_key, opts.type, project_key))
+        else:
+            # Hardcoded to '1' for bwcompat. This is "Bug" in Joyent's Jira.
+            data["type"] = 1
 
         if summary:
             summary = u' '.join(summary)
