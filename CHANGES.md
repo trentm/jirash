@@ -1,5 +1,10 @@
 # jirash Changelog
 
+## 1.4.0
+
+- TOOLS-525: `jirash createissue -t TYPE` to specify issue type
+
+
 ## 1.3.2
 
 - `jirash link <issue> <relation-from-linktypes> <issue>`, e.g.
