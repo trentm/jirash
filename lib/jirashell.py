@@ -923,13 +923,13 @@ class JiraShell(cmdln.Cmdln):
             # First try exact match.
             for it in issue_types:
                 if it["name"] == opts.type:
-                    data["type"] = int(it.id)
+                    data["type"] = int(it["id"])
                     break
             else:
                 # Try case-insensitive full match.
                 for it in issue_types:
                     if it["name"].lower() == opts.type.lower():
-                        data["type"] = int(it.id)
+                        data["type"] = int(it["id"])
                         break
                 else:
                     # Try case-insensitive substring match (require unique).
