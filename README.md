@@ -111,6 +111,9 @@ The possible config vars are:
 - `createissue_no_browse`. Set this to `true` to not open a newly created issue
   in the browser as part of `jirash createissue`. IOW, this is a substitute for
   the "-B, --no-browse" option.
+- `createissue_use_editor`. Set this to `true` to have `jirash createissue`
+  use your $EDITOR to edit the issue summary (title) and description instead
+  of prompting on stdin.
 
 
 # License

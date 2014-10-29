@@ -7,7 +7,7 @@
 # <http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html>
 #
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 import warnings
 warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
@@ -946,18 +946,23 @@ class JiraShell(cmdln.Cmdln):
             # Hardcoded to '1' for bwcompat. This is "Bug" in Joyent's Jira.
             data["type"] = 1
 
+        use_editor = self.cfg.get("createissue_use_editor", False)
+
         if summary:
             summary = u' '.join(summary)
             print u"Summary: %s" % summary
-        else:
+        elif not use_editor:
             summary = query("Summary")
-        data["summary"] = summary.encode('utf-8')
+        else:
+            summary = None
 
-        if not opts.assignee:
+        if opts.assignee:
+            assignee = opts.assignee
+        elif use_editor:
+            assignee = "me"
+        else:
             assignee = query(
                 "Assignee (blank for default, 'me' for yourself)")
-        else:
-            assignee = opts.assignee
         if assignee:
             if assignee == "me":
                 data["assignee"] = self.cfg[self.jira_url]["username"]
@@ -972,10 +977,48 @@ class JiraShell(cmdln.Cmdln):
                 self.jira.component(project_key, cid)["name"]
                 for cid in component_ids)
 
-        if not opts.description:
+        if opts.description:
+            description = opts.description
+        elif not use_editor:
             description = query_multiline("Description")
         else:
-            description = opts.description
+            description = None
+
+        if use_editor and (not summary or not description):
+            text = """# Edit the new issue *summary* and *description*:
+#
+#       My summary on one line at the top
+#
+#       Then some lines
+#       of description
+#       here.
+#
+# Leading lines starting with '#' are dropped.
+"""
+            cursor_line = 10
+            if summary:
+                text += summary + '\n\n\n'
+                cursor_line = 12
+            elif description:
+                text += 'SUMMARY\n\n'
+            if description:
+                text += description
+            if not summary and not description:
+                text += "\n"
+            while True:
+                text = edit_in_editor('%s-NNN.jirash' % project_key, text,
+                    cursor_line)
+                lines = text.splitlines(False)
+                while lines and lines[0].startswith('#'):
+                    lines.pop(0)
+                if len(lines) >= 3 and not lines[1].strip():
+                    summary = lines[0]
+                    description = '\n'.join(lines[2:]).strip()
+                    break
+                sys.stderr.write('error: content is not "SUMMARY\\n\\nDESCRIPTION"\n')
+                raw_input("Press any key to re-edit...")
+
+        data["summary"] = summary.encode('utf-8')
         data["description"] = description.encode('utf-8')
 
         issue = self.jira.create_issue(data)
@@ -1176,6 +1219,27 @@ def query_multiline(question):
         lines.append(line.decode('utf-8'))
     answer = u'\n'.join(lines)
     return answer
+
+def edit_in_editor(filename, before_text, cursor_line=None):
+    import tempfile
+    (fd, tmp_path) = tempfile.mkstemp(filename)
+    fout = os.fdopen(fd, 'w')
+    #XXX
+    #tmp_path = tempfile(None, filename + ".tmp.")
+    #fout = codecs.open(tmp_path, 'w', 'utf8')
+    fout.write(before_text)
+    fout.close()
+    editor = os.environ['EDITOR']
+    line_cmd = ""
+    if editor in ('vi', 'vim') and cursor_line is not None:
+        line_cmd = "+%d" % cursor_line
+    os.system('%s %s -f "%s"' % (editor, line_cmd, tmp_path))
+    fin = codecs.open(tmp_path, 'r', 'utf8')
+    after_text = fin.read()
+    fin.close()
+    return after_text
+
+
 
 
 #---- mainline

@@ -1,5 +1,11 @@
 # jirash Changelog
 
+## 1.5.0
+
+- Add support for `"createissue_use_editor": true` in "~/.jirash.json" config
+  which will change `jirash createissue PROJECT ...` to open your `$EDITOR`
+  to edit the issue `summary` and `description`.
+
 ## 1.4.0
 
 - Update `jirash issues -f FILTER` handling of FILTER to prefer a *full word*
