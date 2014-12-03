@@ -855,7 +855,7 @@ class JiraShell(cmdln.Cmdln):
         if opts.json:
             print json.dumps(versions, indent=2)
         else:
-            template = "%-5s  %-24s  %8s  %8s"
+            template = "%-5s  %-30s  %8s  %8s"
             print template % ("ID", "NAME", "RELEASED", "ARCHIVED")
             for v in versions:
                 print template % (
