@@ -1098,10 +1098,13 @@ class JiraShell(cmdln.Cmdln):
                     except JiraShellError, e:
                         # The issue type may have been removed. Just use the id.
                         issue_type = issue["type"]
-                    priority = self.jira.priority(issue["priority"])
                     status = self.jira.status(issue["status"])
+                    if "priority" in issue:
+                        priority = self.jira.priority(issue["priority"])["name"]
+                    else:
+                        priority = "-"
                     state = "%s/%s/%s" % (
-                        clip(priority["name"], 4, False),
+                        clip(priority, 4, False),
                         clip(status["name"].replace(' ', ''), 4, False),
                         clip(issue_type, 3, False))
                     safeprint(template % (
@@ -1123,7 +1126,11 @@ class JiraShell(cmdln.Cmdln):
             except JiraShellError, e:
                 # The issue type may have been removed. Just use the id.
                 issue_type = "type:" + issue["type"]
-            priority = self.jira.priority(issue["priority"])
+
+            if "priority" in issue:
+                priority = self.jira.priority(issue["priority"])["name"]
+            else:
+                priority = "<no priority>"
             status = self.jira.status(issue["status"])
             return "%s: %s (%s -> %s, %s, %s, %s)" % (
                 issue["key"],
@@ -1131,7 +1138,7 @@ class JiraShell(cmdln.Cmdln):
                 issue["reporter"],
                 issue.get("assignee", "<unassigned>"),
                 issue_type,
-                priority["name"],
+                priority,
                 status["name"])
         except Exception, e:
             log.error("error making issue repr: %s (issue=%r)", e, issue)
