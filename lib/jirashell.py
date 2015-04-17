@@ -27,6 +27,7 @@ import codecs
 import operator
 import webbrowser
 import re
+import ssl
 
 TOP = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0, os.path.join(TOP, "deps"))
@@ -41,7 +42,9 @@ if sys.version_info >= (2, 7):
     reload(sys)
     sys.setdefaultencoding('utf-8')
 
-
+# Check SSLContext support: docs.python.org/3/library/ssl.html#ssl-contexts
+SSL_CONTEXT_SUPPORTED = ((3,) > sys.version_info >= (2, 7, 9) or
+                         sys.version_info >= (3, 2))
 
 #---- globals and config
 
@@ -81,13 +84,31 @@ def _isint(s):
 #---- Jira API
 
 class Jira(object):
-    def __init__(self, jira_url, username, password):
+    def __init__(self, jira_url, username, password, options):
         self.jira_url = jira_url
         self.username = username
         self.password = password
-        self.server = xmlrpclib.ServerProxy(jira_url + '/rpc/xmlrpc',
-            verbose=False)
+
+        # init xmlrpc proxy, with optionally custom SSL context
+        if SSL_CONTEXT_SUPPORTED:
+            self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            for field, value in (options.get('ssl_context') or {}).items():
+                setattr(self._ssl_context, field, getattr(ssl, value))
+            self.server = xmlrpclib.ServerProxy(jira_url + '/rpc/xmlrpc',
+                verbose=False, context=self._ssl_context)
+        else:
+            self.server = xmlrpclib.ServerProxy(jira_url + '/rpc/xmlrpc',
+                verbose=False)
+
         self.auth = self.server.jira1.login(username, password)
+
+        # init a requests session and set verify (context is not yet supported)
+        self.requests_session = requests.Session()
+        if 'verify_mode' in (options.get('ssl_context') or ''):
+            if options['ssl_context']['verify_mode'] == 'CERT_NONE':
+                self.requests_session.verify = False
+
+
         # WARNING: if we allow a longer jira shell session, then caching
         # might need invalidation.
         self.cache = {}
@@ -140,7 +161,7 @@ class Jira(object):
         - headers
         """
         url = self.jira_url + '/rest/api/2' + path
-        r = requests.request(method, url, auth=(self.username, self.password),
+        r = self.requests_session.request(method, url, auth=(self.username, self.password),
                 **kwargs)
         return r
 
@@ -544,7 +565,7 @@ class JiraShell(cmdln.Cmdln):
     def jira(self):
         if not self._jira_cache:
             self._jira_cache = Jira(self.jira_url, self.cfg[self.jira_url]["username"],
-                self.cfg[self.jira_url]["password"])
+                self.cfg[self.jira_url]["password"], self.cfg[self.jira_url].get("options", {}))
         return self._jira_cache
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
