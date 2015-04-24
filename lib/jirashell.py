@@ -244,6 +244,52 @@ class Jira(object):
                 % (link_type_name, inward_issue_key, outward_issue_key,
                     res.status_code, res.text))
 
+    def issue_transitions(self, key):
+        if "issue_transitions" not in self.cache:
+            res = self._jira_rest_call(
+                "GET", "/issue/%s/transitions" % key)
+            if res.status_code != 200:
+                raise JiraShellError("error getting issue transitions: %s"
+                                     % res.text)
+            self.cache["issue_transitions"] = res.json()["transitions"]
+        return self.cache["issue_transitions"]
+
+    def transition(self, key, new_status, data):
+        """
+        Transition the issue from it's current status to another. The
+        status must be supported in the the transition flow.
+
+        More details here: https://docs.atlassian.com/jira/REST/latest/#d2e4056
+
+        data may be an update/fields dict such as:
+        {
+            "update": {
+                "comment": [
+                    {
+                        "add": {
+                            "body": "Bug has been fixed."
+                        }
+                    }
+                ]
+            },
+            "fields": {
+                "resolution": {
+                    "name": "Closed"
+                }
+            },
+            "historyMetadata": { ... }
+        }
+        """
+        data = data or {}
+        data["transition"]["id"] = new_status
+        res = self._jira_rest_call(
+            'POST', "/issue/%s/transitions" % key,
+            headers={'content-type': 'application/json'},
+            data=json.dumps(data))
+        if res.status_code != 204:
+            raise JiraShellError('error transitioning (%s, %s): %s %s\ndata: %s' %
+                                 (key, new_status, res.status_code, res.text, data))
+
     def issue(self, key):
 #XXX
 #        It's right under 'issuelinks' in each issue's JSON representation. Example:
@@ -843,6 +889,78 @@ class JiraShell(cmdln.Cmdln):
         link_type = candidates[0]
         self.jira.link(link_type["name"], first, second)
         print "Linked: %s %s %s" % (first, link_type["outward"], second)
+
+    @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    def do_transitions(self, subcmd, opts, issue):
+        """List available issue transitions.
+
+        Usage:
+            ${cmd_name} <issue>
+
+        ${cmd_option_list}
+        """
+        transitions = self.jira.issue_transitions(issue)
+        if opts.json:
+            print json.dumps(transitions, indent=2)
+        else:
+            template = "%-6s  %-12s  %s"
+            print template % ("ID", "NAME", "FIELDS")
+            for t in transitions:
+                print template % (t["id"], t["name"],
+                                  ' '.join(t.get("fields", {}).keys()))
+
+    @cmdln.option("-r", "--resolution", help="Set resolution")
+    @cmdln.option("-c", "--comment", help="Add a comment")
+    @cmdln.option("-d", "--data", help="Transition update data in JSON format")
+    def do_transition(self, subcmd, opts, *args):
+        """Transition a Jira issue to another status.
+
+        Usage:
+            ${cmd_name} <issue> <status>
+
+        ${cmd_option_list}
+        `<status>` is either a "transition" id or name from this Jira's issue
+        transitions (list with `jirash transitions`).
+
+        Examples:
+            jirash transition MON-123 "In Progress"
+            jirash transition OS-2000 Closed -r "Duplicate" -c "dupe of OS-1999
+            jirash transition IMGAPI-123 Resolved --data='{
+                "update": { "add": { "fixVersions": {...}}}
+            }'
+        """
+        if len(args) < 2:
+            raise JiraShellError('not enough arguments: %s' % ' '.join(args))
+
+        key = args[0]
+        status = args[1]
+        status_name = ""
+        transitions = self.jira.issue_transitions(key)
+        for t in transitions:
+            if status == t["id"] or status == t["name"]:
+                status = t["id"]
+                status_name = t["name"]
+                break
+        else:
+            raise JiraShellError('Invalid status for issue: %s' % status)
+
+        data = {"transition": {"id": status}}
+        if opts.data:
+            data.update(json.loads(opts.data))
+        if opts.comment:
+            if "update" not in data:
+                data["update"] = {}
+            data["update"]["comment"] = [{"add": {"body": opts.comment}}]
+        if opts.resolution:
+            resolutions = [r["name"] for r in self.jira.resolutions()]
+            if opts.resolution not in resolutions:
+                raise JiraShellError('Invalid resolution: %s' % opts.resolution)
+            if "fields" not in data:
+                data["fields"] = {}
+            data["fields"]["resolution"] = {"name": opts.resolution}
+
+        self.jira.transition(key, status, data)
+        print "Transitioned: %s %s" % (key, status_name)
 
     @cmdln.option("-p", "--project", dest="project_key",
         help="Project for which to get issue types.")
