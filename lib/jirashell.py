@@ -28,6 +28,7 @@ import operator
 import webbrowser
 import re
 import ssl
+from datetime import datetime
 
 TOP = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0, os.path.join(TOP, "deps"))
@@ -112,6 +113,9 @@ class Jira(object):
             if options['ssl_context']['verify_mode'] == 'CERT_NONE':
                 self.requests_session.verify = False
 
+        self.prefer_rest_api = options.get('prefer_rest_api', True)
+        # Jira default time formatted as: 2015-04-27T07:51:06.000+0000
+        self.time_format = options.get('time_format', "%Y-%m-%dT%H:%M:%S.%f+0000")
 
         # WARNING: if we allow a longer jira shell session, then caching
         # might need invalidation.
@@ -202,7 +206,7 @@ class Jira(object):
         return self.cache["priorities"]
 
     def priority(self, priority_id):
-        assert isinstance(priority_id, str)
+        assert isinstance(priority_id, basestring)
         for p in self.priorities():
             if p["id"] == priority_id:
                 return p
@@ -290,12 +294,51 @@ class Jira(object):
             raise JiraShellError('error transitioning (%s, %s): %s %s\ndata: %s' %
                                  (key, new_status, res.status_code, res.text, data))
 
-    def issue(self, key):
+    def issue(self, key, expand=None):
 #XXX
 #        It's right under 'issuelinks' in each issue's JSON representation. Example:
 #
 #https://jira.atlassian.com/rest/api/latest/issue/JRA-9?fields=summary,issuelinks
-        return self.server.jira1.getIssue(self.auth, key)
+        if not self.prefer_rest_api:
+            return self.server.jira1.getIssue(self.auth, key)
+
+        url = "/issue/%s" % key
+        if expand:
+            url = '%s?expand=%s' % (url, expand)
+        res = self._jira_rest_call("GET", url)
+        if res.status_code != 200:
+            raise JiraShellError("error getting issue %s: %s"
+                                 % (key, res.text))
+        return res.json()
+
+    def issue_changelog(self, key):
+        issue_details = self.issue(key, expand='changelog')
+        return issue_details['changelog']
+
+    def issue_total_work_time(self, key, user=None):
+        if user is None:
+            user = self.username
+        total_seconds = 0
+        clog = self.issue_changelog(key)
+        work_start = None
+        for entry in clog['histories']:
+            if entry.get('author', {}).get('name') != user:
+                continue
+            for change in entry.get('items', []):
+                if change['field'] == 'status':
+                    if change["toString"] == "In Progress":
+                        work_start = entry['created']
+                    elif change["fromString"] == "In Progress" and work_start:
+                        start = datetime.strptime(work_start, self.time_format)
+                        end = datetime.strptime(entry['created'],
+                                                self.time_format)
+                        work_start = None
+                        delta = (end - start)
+                        total_seconds += delta.total_seconds()
+                    break
+            else:
+                continue
+        return total_seconds
 
     def issues_from_filter(self, filter):
         """Return all issues for the given filter.
@@ -348,15 +391,37 @@ class Jira(object):
         log.debug("filter match for %r: %s", filter, json.dumps(filterObj))
         return self.server.jira1.getIssuesFromFilter(self.auth, filterObj["id"])
 
-    def issues_from_search(self, terms, project_keys=None):
+    def issues_from_search(self, terms, project_keys=None, fix_version=None,
+                           expand=None):
         """Search for issues.
 
         @param terms {str} A single stream of search term(s).
         @param project_keys {list} Optional list of project keys to which to
             limit the search.
         """
+
+        BIG = 1000000
+
+        if self.prefer_rest_api:
+            query = ''
+            if project_keys:
+                query = 'PROJECT in (%s)' % ','.join(project_keys)
+            if terms:
+                query = '%s AND text ~ "%s"' % (query, terms)
+            if fix_version:
+                query = '%s AND fixVersion = %s' % (query, fix_version)
+            fields = '*all'
+            url = "/search/?jql=%s&maxResults=%s&expand=%s&fields=%s" % (
+                query, BIG, expand or '', fields)
+            res = self._jira_rest_call("GET", url)
+            if res.status_code != 200:
+                raise JiraShellError("error searching: %s"
+                                     % res.text)
+            return res.json()
+
         if isinstance(terms, (list, tuple)):
             terms = ' '.join(terms)
+
         if not project_keys:
             #XXX
             # TODO: This errors out against my Jira 4.2:
@@ -367,7 +432,6 @@ class Jira(object):
         else:
             # Note: I don't want to bother with `maxNumResults` so we set
             # it to a big number.
-            BIG = 1000000
             issues = self.server.jira1.getIssuesFromTextSearchWithProject(
                 self.auth, project_keys, terms, BIG)
             if len(issues) == BIG:
@@ -389,7 +453,7 @@ class Jira(object):
         return issue_types
 
     def issue_type(self, issue_id):
-        assert isinstance(issue_id, str)
+        assert isinstance(issue_id, basestring)
         for t in self.issue_types():
             if t["id"] == issue_id:
                 return t
@@ -459,7 +523,7 @@ class Jira(object):
         return versions
 
     def version(self, version_id):
-        assert isinstance(version_id, str)
+        assert isinstance(version_id, basestring)
         for v in self.versions():
             if v["id"] == version_id:
                 return v
@@ -520,7 +584,7 @@ class Jira(object):
         return self.cache["statuses"]
 
     def status(self, status_id):
-        assert isinstance(status_id, str)
+        assert isinstance(status_id, basestring)
         for s in self.statuses():
             if s["id"] == status_id:
                 return s
@@ -549,6 +613,41 @@ class Jira(object):
         if log.isEnabledFor(logging.DEBUG):
             log.debug("calling updateIssue(%r, %s)", key, json.dumps(data))
         return self.server.jira1.updateIssue(self.auth, key, data)
+
+    def latest_releases(self, limit_projects=None):
+        all_projects = self.projects()
+        if limit_projects:
+            projects = [p for p in all_projects if p['key'] in limit_projects]
+        else:
+            projects = all_projects
+        releases = {}
+        for p in projects:
+            released = sorted((v for v in self.versions(p['key'])
+                               if 'releaseDate' in v),
+                              key=lambda v: v['releaseDate'])
+            if not released:
+                continue
+            rel = released[-1]
+            rel['project'] = p['name']
+            rel['proj_key'] = p['key']
+            rel['url'] = ('%s/secure/ReleaseNote.jspa?projectId=%s&version='
+                          '%s') % (self.jira_url, p['id'], rel['id'])
+            releases[p['id']] = rel
+        return releases
+
+    def changelog(self, project, version):
+        issues = self.issues_from_search(
+            '', project_keys=[project],
+            fix_version=version)
+        if isinstance(issues, dict) and 'issues' in issues:
+            issues = issues['issues']
+        grouped_issues = {}
+        for issue in issues:
+            itype = issue['fields']["issuetype"]["name"]
+            if itype not in grouped_issues:
+                grouped_issues[itype] = []
+            grouped_issues[itype].append(issue)
+        return grouped_issues
 
 
 #---- JiraShell
@@ -631,13 +730,14 @@ class JiraShell(cmdln.Cmdln):
         if opts.json:
             print json.dumps(projects, indent=2)
         else:
-            template = "%-10s  %-32s  %s"
-            print template % ("KEY", "NAME", "LEAD")
+            template = "%-10s  %-32s  %-24s %s"
+            print template % ("KEY", "NAME", "LEAD", "ID")
             for p in projects:
                 print template % (
                     clip(p["key"], 10),
                     clip(p["name"], 32),
-                    p["lead"]
+                    clip(p["lead"], 24),
+                    p["id"],
                 )
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
@@ -735,6 +835,8 @@ class JiraShell(cmdln.Cmdln):
                 clip(user["fullname"], 20),
                 user["email"])
 
+    @cmdln.option("-t", "--timelog", action="store_true", help="Get total time in progress by current user")
+    @cmdln.option("-l", "--long", action="store_true", help="Long output")
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     @cmdln.option("-s", "--short", action="store_true", help="Short issue repr")
     def do_issue(self, subcmd, opts, key):
@@ -751,7 +853,8 @@ class JiraShell(cmdln.Cmdln):
         elif opts.short:
             print self._issue_repr_short(issue)
         else:
-            print self._issue_repr_flat(issue)
+            timelog = opts.timelog and self.jira.issue_total_work_time(key)
+            print self._issue_repr_flat(issue, timelog, long_format=opts.long)
 
     @cmdln.option("-f", "--filter",
         help="Filter (saved search) to use. See `jirash filters`. The given "
@@ -768,6 +871,8 @@ class JiraShell(cmdln.Cmdln):
             "statuses.")
     @cmdln.option("-p", "--project", action="append", dest="project_keys",
         help="Project key(s) to which to limit a text search")
+    @cmdln.option("-v", "--version", dest="version",
+        help="include only issues for this fixVersions")
     @cmdln.option("-l", "--long", action="store_true", help="Long output")
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_issues(self, subcmd, opts, *terms):
@@ -796,7 +901,7 @@ class JiraShell(cmdln.Cmdln):
             except JiraShellError, e:
                 log.error(e)
                 return 1
-        elif not terms:
+        elif not terms and not opts.version:
             log.error("no search terms given")
             return 1
         else:
@@ -804,7 +909,8 @@ class JiraShell(cmdln.Cmdln):
             # if that is more useful.
             term = ' '.join(terms)
             issues = self.jira.issues_from_search(terms,
-                project_keys=opts.project_keys)
+                project_keys=opts.project_keys,
+                fix_version=opts.version)
 
         status_ids = []
         if opts.statuses:
@@ -831,6 +937,75 @@ class JiraShell(cmdln.Cmdln):
         if key_re.search(argv[0]):
             return self.onecmd(['issue'] + argv)
         return cmdln.Cmdln.default(self, argv)
+
+    def do_relations(self, subcmd, opts, project, version):
+        """
+        List issues linked to given project in another project.
+
+        Usage:
+            ${cmd_name} PROJECT VERSION
+
+        ${cmd_option_list}
+        """
+        issues = self.jira.issues_from_search(
+            '', project_keys=[project],
+            fix_version=version)
+        if isinstance(issues, dict) and 'issues' in issues:
+            issues = issues['issues']
+        blocking_projects = {}
+        for issue in issues:
+            if 'fields' in issue:
+                fields = issue['fields']
+            else:
+                fields = issue
+            links = fields.get('issuelinks') or []
+            key = issue["key"]
+            if not links:
+                continue
+            for link in links:
+                if 'inwardIssue' in link:
+                    link_issue = link['inwardIssue']['key']
+                    link_name = link['type']['inward']
+                else:
+                    link_issue = link['outwardIssue']['key']
+                    link_name = link['type']['outward']
+                if link_issue.startswith(project):
+                    # linked to self, skip it
+                    continue
+                if link_name == 'is blocked by':
+                    fi = self.jira.issue(link_issue)
+                    proj = fi['fields']['project']['name']
+                    versions = set(
+                        [v['name'] for v in fi['fields']['fixVersions']
+                         if not v['released']])
+                    if not versions:
+                        continue
+                    if proj not in blocking_projects:
+                        blocking_projects[proj] = set()
+                    # TODO: check if project was not yet released
+                    blocking_projects[proj].update(versions)
+                print("%s %s %s" % (key, link_name, link_issue))
+
+        if blocking_projects:
+            print("\nThis version is blocked by issues in unreleased versions:")
+            for proj, versions in blocking_projects.items():
+                print("%s: %s" % (proj, ', '.join(list(versions))))
+
+    def do_changelog(self, subcmd, opts, project, version):
+        """
+        List project/version changelog.
+
+        Usage:
+            ${cmd_name} PROJECT VERSION
+
+        ${cmd_option_list}
+        """
+        changelog = self.jira.changelog(project, version)
+        for itype, issues in changelog.items():
+            print('\n** %s' % itype)
+            for issue in issues:
+                print('    * [%s] - %s' % (issue["key"],
+                      issue["fields"]["summary"]))
 
     #TODO
     #def completedefault(self, text, line, begidx, endidx):
@@ -912,6 +1087,7 @@ class JiraShell(cmdln.Cmdln):
     @cmdln.option("-r", "--resolution", help="Set resolution")
     @cmdln.option("-c", "--comment", help="Add a comment")
     @cmdln.option("-d", "--data", help="Transition update data in JSON format")
+    @cmdln.option("-t", "--time", action="store_true", help="Update worklog to total in progress time spent on issue")
     def do_transition(self, subcmd, opts, *args):
         """Transition a Jira issue to another status.
 
@@ -958,6 +1134,14 @@ class JiraShell(cmdln.Cmdln):
             if "fields" not in data:
                 data["fields"] = {}
             data["fields"]["resolution"] = {"name": opts.resolution}
+        if opts.time:
+            # TOOD: Test this works
+            if "update" not in data:
+                data["update"] = {}
+            data["update"]["worklog"] = {
+                "worklogs": [{"add": {
+                    "timeSpentSeconds": self.jira.issue_total_work_time(key)}}]
+            }
 
         self.jira.transition(key, status, data)
         print "Transitioned: %s %s" % (key, status_name)
@@ -1001,14 +1185,83 @@ class JiraShell(cmdln.Cmdln):
         if opts.json:
             print json.dumps(versions, indent=2)
         else:
-            template = "%-5s  %-30s  %8s  %8s"
-            print template % ("ID", "NAME", "RELEASED", "ARCHIVED")
+            template = "%-5s  %-30s  %8s  %8s %s"
+            print template % ("ID", "NAME", "RELEASED", "ARCHIVED", "RELEASE DATE")
             for v in versions:
                 print template % (
                     v["id"],
                     v["name"],
                     (v["released"] == "true" and "released" or "-"),
-                    (v["archived"] == "true" and "archived" or "-"))
+                    (v["archived"] == "true" and "archived" or "-"),
+                    v.get("releaseDate", "-"))
+
+    def do_latestrelease(self, subcmd, opts):
+        """Get last release versions for all projects.
+
+        Usage:
+            ${cmd_name}
+
+        ${cmd_option_list}
+        """
+        releases = self.jira.latest_releases()
+        template = "%-30s  %-10s  %12s  %s"
+        print(template % ("PROJECT", "VERSION", "RELEASE DATE",
+                          "RELEASE NOTES"))
+        for rel in sorted(releases.values(), key=lambda r: r['releaseDate'],
+                          reverse=True):
+            print template % (
+                rel['project'],
+                rel['name'],
+                rel['releaseDate'][:10],
+                rel['url'],
+            )
+
+    @cmdln.option("-d", "--date", help="Specific release date")
+    def do_release_notes(self, subcmd, opts, *projects):
+        """Get last release notes (html) for given (or all) projects. Must be
+        given a date or at least one project.
+
+        Usage:
+            ${cmd_name} -d 2015-04-28
+            ${cmd_name} PROJECT ...
+            ${cmd_name} PROJECT ... -d 2015-04-28
+
+        ${cmd_option_list}
+        """
+        if not projects and not opts.date:
+            raise JiraShellError("Please pass either a date (with --date) or "
+                                 "at least one project")
+        date_fmt = '%Y-%m-%d'
+        releases = self.jira.latest_releases(projects)
+        target_date = None
+        if opts.date:
+            target_date = datetime.strptime(opts.date, date_fmt)
+            releases = dict([(k, r) for k, r in releases.items()
+                            if datetime.strptime(r['releaseDate'][:10],
+                            date_fmt) == target_date])
+        if not releases:
+            raise JiraShellError(
+                "No releases found%s%s" % (target_date and ' on %s' or '',
+                                           projects and ' for projects %s' +
+                                           ' '.join(projects) or ''))
+
+        output = ""
+        for rel in releases.values():
+            changelog = self.jira.changelog(rel["proj_key"], rel["name"])
+            if not changelog:
+                print("No changelog found for %s %s" % (
+                      rel["project"], rel["name"]))
+            output += '## %s\n' % rel['project']
+            for itype, issues in changelog.items():
+                output += '\n### %s' % itype
+                for issue in issues:
+                    output += ('\n* [%s](%s) - %s' % (
+                               issue["key"],
+                               '%s/browse/%s' % (self.jira_url, issue["key"]),
+                               issue["fields"]["summary"]))
+                output += '\n'
+            output += '\n\n'
+        print(output)
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     def do_components(self, subcmd, opts, project_key):
@@ -1253,6 +1506,9 @@ class JiraShell(cmdln.Cmdln):
                     raise
         else:
             if issues:
+                if 'issues' in issues:
+                    orig_issues_wrapper = issues
+                    issues = issues['issues']
                 key_width = max(len(i["key"]) for i in issues)
                 template = u"%%-%ds  %%-13s  %%-10s  %%s" % key_width
                 term_width = getTerminalSize()[1]
@@ -1260,25 +1516,44 @@ class JiraShell(cmdln.Cmdln):
                 columns = ("KEY", "STATE", "ASSIGNEE", "SUMMARY")
                 print template % columns
             for issue in issues:
+                if "fields" in issue:
+                    orig_issue = issue
+                    issue = issue["fields"]
                 try:
                     try:
                         issue_type = self.jira.issue_type(issue["type"])["name"]
+                    except KeyError:
+                        issue_type = self.jira.issue_type(issue["issuetype"]["id"])["name"]
                     except JiraShellError, e:
                         # The issue type may have been removed. Just use the id.
                         issue_type = issue["type"]
-                    status = self.jira.status(issue["status"])
+                    try:
+                        status = self.jira.status(issue["status"])
+                    except AssertionError:
+                        status = self.jira.status(issue["status"]["id"])
                     if "priority" in issue:
-                        priority = self.jira.priority(issue["priority"])["name"]
+                        try:
+                            priority = self.jira.priority(issue["priority"])["name"]
+                        except AssertionError:
+                            priority = self.jira.priority(issue["priority"]["id"])["name"]
                     else:
                         priority = "-"
+                    if isinstance(issue.get("assignee"), dict):
+                        assignee = clip(issue["assignee"]['displayName'], 10)
+                    else:
+                        assignee = clip(issue.get("assignee") or "<unassigned>", 10)
+                    try:
+                        key = issue["key"]
+                    except KeyError:
+                        key = orig_issue["key"]
                     state = "%s/%s/%s" % (
                         clip(priority, 4, False),
                         clip(status["name"].replace(' ', ''), 4, False),
                         clip(issue_type, 3, False))
                     safeprint(template % (
-                        issue["key"],
+                        key,
                         state,
-                        clip(issue.get("assignee", "unassigned"), 10),
+                        assignee,
                         #issue["summary"],
                         clip(issue["summary"], summary_width),
                     ))
@@ -1287,27 +1562,55 @@ class JiraShell(cmdln.Cmdln):
                         e, issue)
                     raise
 
-    def _issue_repr_flat(self, issue):
+    def _issue_repr_flat(self, issue, timelog=None, long_format=False):
         try:
+            if "fields" in issue:
+                orig_issue = issue
+                issue = issue["fields"]
             try:
                 issue_type = self.jira.issue_type(issue["type"])["name"]
+            except KeyError:
+                issue_type = self.jira.issue_type(issue["issuetype"]["id"])["name"]
             except JiraShellError, e:
                 # The issue type may have been removed. Just use the id.
                 issue_type = "type:" + issue["type"]
 
             if "priority" in issue:
-                priority = self.jira.priority(issue["priority"])["name"]
+                try:
+                    priority = self.jira.priority(issue["priority"])["name"]
+                except AssertionError:
+                    priority = self.jira.priority(issue["priority"]["id"])["name"]
             else:
                 priority = "<no priority>"
-            status = self.jira.status(issue["status"])
-            return "%s %s (%s -> %s, %s, %s, %s)" % (
-                issue["key"],
+            try:
+                status = self.jira.status(issue["status"])
+            except AssertionError:
+                status = self.jira.status(issue["status"]["id"])
+
+            if timelog:
+                timelog = ', %s seconds spent in progress' % timelog
+            try:
+                key = issue["key"]
+            except KeyError:
+                key = orig_issue["key"]
+            if isinstance(issue["reporter"], dict):
+                reporter = issue["reporter"]['displayName']
+            else:
+                reporter = issue["reporter"]
+            if isinstance(issue.get("assignee"), dict):
+                assignee = issue["assignee"]['displayName']
+            else:
+                assignee = issue.get("assignee", "<unassigned>")
+            descr = long_format and ('\n\n%s\n' % issue["description"]) or ''
+            return "%s: %s (%s -> %s, %s, %s, %s)%s%s" % (
+                key,
                 issue["summary"],
-                issue["reporter"],
-                issue.get("assignee", "<unassigned>"),
+                reporter,
+                assignee,
                 issue_type,
                 priority,
-                status["name"])
+                status["name"], timelog or '',
+                descr)
         except Exception, e:
             log.error("error making issue repr: %s (issue=%r)", e, issue)
             raise
