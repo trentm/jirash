@@ -392,7 +392,7 @@ class Jira(object):
         return self.server.jira1.getIssuesFromFilter(self.auth, filterObj["id"])
 
     def issues_from_search(self, terms, project_keys=None, fix_version=None,
-                           expand=None):
+                           expand=None, fields='*all'):
         """Search for issues.
 
         @param terms {str} A single stream of search term(s).
@@ -403,16 +403,16 @@ class Jira(object):
         BIG = 1000000
 
         if self.prefer_rest_api:
-            query = ''
+            query = []
             if project_keys:
-                query = 'PROJECT in (%s)' % ','.join(project_keys)
+                query.append('PROJECT in (%s)' % ','.join(project_keys))
             if terms:
-                query = '%s AND text ~ "%s"' % (query, terms)
+                query.append('text ~ "%s"' % terms)
             if fix_version:
-                query = '%s AND fixVersion = %s' % (query, fix_version)
-            fields = '*all'
+                query.append('fixVersion = %s' % fix_version)
+
             url = "/search/?jql=%s&maxResults=%s&expand=%s&fields=%s" % (
-                query, BIG, expand or '', fields)
+                ' AND '.join(query), BIG, expand or '', fields)
             res = self._jira_rest_call("GET", url)
             if res.status_code != 200:
                 raise JiraShellError("error searching: %s"
