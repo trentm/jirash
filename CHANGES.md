@@ -1,5 +1,23 @@
 # jirash Changelog
 
+## 1.6.0
+
+- [issue #24] `jirash createissue` improvements around editing the
+  summary/description in your editor:
+    - `jirash createissue -e ...` to explicitly use editor
+    - `jirash createissue -E file ...` to also specify a template file
+    - If the issue creation fails the editted file will be saved out so
+      you don't lose your changes. The following is printed in that case:
+
+            $ jirash createissue VMAPI
+            Note: Your edits have been saved to VMAPI-NNN.1431114917.jirash, reload with:
+                jirash createissue -E VMAPI-NNN.1431114917.jirash ...
+
+            Traceback (most recent call last):
+              File "/Users/trentm/tm/jirash/lib/jirashell.py", line 1294, in <module>
+            ...
+
+
 ## 1.5.0
 
 - Add support for `"createissue_use_editor": true` in "~/.jirash.json" config
