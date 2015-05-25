@@ -649,6 +649,11 @@ class Jira(object):
             grouped_issues[itype].append(issue)
         return grouped_issues
 
+    def issue_log(self, key):
+        res = self._jira_rest_call(
+                "GET", "/issue/%s/?expand=changelog" % key)
+        return res.json()
+
 
 #---- JiraShell
 
@@ -837,6 +842,7 @@ class JiraShell(cmdln.Cmdln):
 
     @cmdln.option("-t", "--timelog", action="store_true", help="Get total time in progress by current user")
     @cmdln.option("-l", "--long", action="store_true", help="Long output")
+    @cmdln.option("-c", "--changelog", action="store_true", help="Show issue changelog")
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
     @cmdln.option("-s", "--short", action="store_true", help="Short issue repr")
     def do_issue(self, subcmd, opts, key):
@@ -847,7 +853,8 @@ class JiraShell(cmdln.Cmdln):
 
         ${cmd_option_list}
         """
-        issue = self.jira.issue(key)
+        expand = 'transitions,changelog' if opts.changelog else None
+        issue = self.jira.issue(key, expand=expand)
         if opts.json:
             print json.dumps(issue, indent=2)
         elif opts.short:
@@ -1219,31 +1226,34 @@ class JiraShell(cmdln.Cmdln):
     @cmdln.option("-d", "--date", help="Specific release date")
     def do_release_notes(self, subcmd, opts, *projects):
         """Get last release notes (html) for given (or all) projects. Must be
-        given a date or at least one project.
+        given a date (default: today) or at least one project (default: all
+        projects, for last release date).
 
         Usage:
+            ${cmd_name}
             ${cmd_name} -d 2015-04-28
             ${cmd_name} PROJECT ...
             ${cmd_name} PROJECT ... -d 2015-04-28
 
         ${cmd_option_list}
         """
-        if not projects and not opts.date:
-            raise JiraShellError("Please pass either a date (with --date) or "
-                                 "at least one project")
         date_fmt = '%Y-%m-%d'
         releases = self.jira.latest_releases(projects)
-        target_date = None
-        if opts.date:
-            target_date = datetime.strptime(opts.date, date_fmt)
-            releases = dict([(k, r) for k, r in releases.items()
-                            if datetime.strptime(r['releaseDate'][:10],
-                            date_fmt) == target_date])
+        target_date = (
+            datetime.strptime(opts.date)
+            if opts.date
+            else datetime.today()
+        ).date()
+        # log.debug("Raw releases fetched: %s", pprint(releases))
+        releases = dict([(k, r) for k, r in releases.items()
+                        if datetime.strptime(r['releaseDate'][:10],
+                        date_fmt).date() == target_date])
         if not releases:
             raise JiraShellError(
-                "No releases found%s%s" % (target_date and ' on %s' or '',
-                                           projects and ' for projects %s' +
-                                           ' '.join(projects) or ''))
+                "No releases found%s%s, please try again." % (
+                    target_date and ' on %s' % target_date or '',
+                    projects and (' for projects %s' %
+                                  ' '.join(projects)) or ''))
 
         output = ""
         for rel in releases.values():
@@ -1251,7 +1261,7 @@ class JiraShell(cmdln.Cmdln):
             if not changelog:
                 print("No changelog found for %s %s" % (
                       rel["project"], rel["name"]))
-            output += '## %s\n' % rel['project']
+            output += '## %s %s\n' % (rel['project'], rel['name'])
             for itype, issues in changelog.items():
                 output += '\n### %s' % itype
                 for issue in issues:
@@ -1260,7 +1270,7 @@ class JiraShell(cmdln.Cmdln):
                                '%s/browse/%s' % (self.jira_url, issue["key"]),
                                issue["fields"]["summary"]))
                 output += '\n'
-            output += '\n\n'
+            output += '\n\n- - -\n'
         print(output)
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
