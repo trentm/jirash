@@ -863,6 +863,12 @@ class JiraShell(cmdln.Cmdln):
             timelog = opts.timelog and self.jira.issue_total_work_time(key)
             print self._issue_repr_flat(issue, timelog, long_format=opts.long)
 
+    def _get_issue_status(self, issue):
+        if issue.get('fields', {}).get('status', {}).get('id'):
+            return issue['fields']['status']['id']
+        return None
+
+
     @cmdln.option("-f", "--filter",
         help="Filter (saved search) to use. See `jirash filters`. The given "
             "argument can be the filter id, name, or a unique substring or "
@@ -892,6 +898,7 @@ class JiraShell(cmdln.Cmdln):
         Usage:
             ${cmd_name} TERMS...
             ${cmd_name} -f FILTER
+            ${cmd_name} -o -p PROJ
 
         ${cmd_option_list}
         """
@@ -908,7 +915,7 @@ class JiraShell(cmdln.Cmdln):
             except JiraShellError, e:
                 log.error(e)
                 return 1
-        elif not terms and not opts.version:
+        elif not terms and not opts.version and not opts.project_keys:
             log.error("no search terms given")
             return 1
         else:
@@ -932,7 +939,10 @@ class JiraShell(cmdln.Cmdln):
                 except JiraShellError, e:
                     log.warn(e)
         if status_ids:
-            issues = [i for i in issues if i["status"] in status_ids]
+            if self.jira.prefer_rest_api:
+                issues = [i for i in issues['issues'] if self._get_issue_status(i) in status_ids]
+            else:
+                issues = [i for i in issues if i["status"] in status_ids]
 
         if opts.json:
             print json.dumps(issues, indent=2)
