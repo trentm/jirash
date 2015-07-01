@@ -966,7 +966,7 @@ class JiraShell(cmdln.Cmdln):
         if opts.assignee:
             assignee = opts.assignee
         elif use_editor:
-            assignee = "me"
+            assignee = None
         else:
             assignee = query(
                 "Assignee (blank for default, 'me' for yourself)")

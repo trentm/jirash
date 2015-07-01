@@ -1,5 +1,11 @@
 # jirash Changelog
 
+## 1.6.1
+
+- `jirash createissue ...` intended to default to not passing an assignee, i.e.
+  use the defualt for the project. However, accidentally, when using the editor
+  to create the issue data, it defaulted to 'me'. I don't want that.
+
 ## 1.6.0
 
 - [issue #24] `jirash createissue` improvements around editing the
