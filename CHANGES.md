@@ -1,5 +1,21 @@
 # jirash Changelog
 
+## 1.7.0
+
+- Change the one-line ("flat") string representation of an issue to no longer
+  have the colon separating the ID and the ticket title. E.g.:
+
+      # old
+      $ jirash DOCKER-404
+      DOCKER-404: when provision fails we should return only req_id and not VM info (josh -> josh, Bug, Normal, Resolved)
+
+      # new
+      $ jirash DOCKER-404
+      DOCKER-404 when provision fails we should return only req_id and not VM info (josh -> josh, Bug, Normal, Resolved)
+
+  This is motivated by
+  <https://github.com/joyent/eng/blob/master/docs/index.md#commit-comments>.
+
 ## 1.6.1
 
 - `jirash createissue ...` intended to default to not passing an assignee, i.e.

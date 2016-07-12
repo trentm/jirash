@@ -7,7 +7,7 @@
 # <http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html>
 #
 
-__version__ = "1.6.0"
+__version__ = "1.7.0"
 
 import warnings
 warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
@@ -1154,7 +1154,7 @@ class JiraShell(cmdln.Cmdln):
             else:
                 priority = "<no priority>"
             status = self.jira.status(issue["status"])
-            return "%s: %s (%s -> %s, %s, %s, %s)" % (
+            return "%s %s (%s -> %s, %s, %s, %s)" % (
                 issue["key"],
                 issue["summary"],
                 issue["reporter"],

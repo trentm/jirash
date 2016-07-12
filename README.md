@@ -57,10 +57,10 @@ date (i.e. there are probably more supported commands in the latest).
     ...
 
     $ jirash issues TOOLS-90
-    TOOLS-90: Add a distclean target (mark.cavage -> trent.mick, Improvem...)
+    TOOLS-90 Add a distclean target (mark.cavage -> trent.mick, Improvem...)
 
     $ jirash TOOLS-90     # shortcut
-    TOOLS-90: Add a distclean target (mark.cavage -> trent.mick, Improvem...)
+    TOOLS-90 Add a distclean target (mark.cavage -> trent.mick, Improvem...)
 
     $ jirash createissue TOOLS
     Summary: Foo is broken
@@ -70,7 +70,7 @@ date (i.e. there are probably more supported commands in the latest).
     blah
     blah
     .
-    created: TOOLS-157: Foo is broken (trent.mick -> trent.mick, Bug, Normal, Open)
+    created: TOOLS-157 Foo is broken (trent.mick -> trent.mick, Bug, Normal, Open)
 
     $ jirash filters
     ID     AUTHOR           NAME
