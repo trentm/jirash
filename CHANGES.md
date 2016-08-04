@@ -1,5 +1,11 @@
 # jirash Changelog
 
+## 1.8.0
+
+- `jirash issue -s,--short KEY` Add the short option to display a short
+  issue summary: `$key $title`. This is a somewhat biased "short" form
+  that is used at Joyent for commit messages.
+
 ## 1.7.0
 
 - Change the one-line ("flat") string representation of an issue to no longer

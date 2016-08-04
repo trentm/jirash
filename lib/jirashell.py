@@ -7,7 +7,7 @@
 # <http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html>
 #
 
-__version__ = "1.7.0"
+__version__ = "1.8.0"
 
 import warnings
 warnings.filterwarnings("ignore", module="wstools.XMLSchema", lineno=3107)
@@ -665,6 +665,7 @@ class JiraShell(cmdln.Cmdln):
                 user["email"])
 
     @cmdln.option("-j", "--json", action="store_true", help="JSON output")
+    @cmdln.option("-s", "--short", action="store_true", help="Short issue repr")
     def do_issue(self, subcmd, opts, key):
         """Get an issue.
 
@@ -676,6 +677,8 @@ class JiraShell(cmdln.Cmdln):
         issue = self.jira.issue(key)
         if opts.json:
             print json.dumps(issue, indent=2)
+        elif opts.short:
+            print self._issue_repr_short(issue)
         else:
             print self._issue_repr_flat(issue)
 
@@ -1164,6 +1167,13 @@ class JiraShell(cmdln.Cmdln):
                 status["name"])
         except Exception, e:
             log.error("error making issue repr: %s (issue=%r)", e, issue)
+            raise
+
+    def _issue_repr_short(self, issue):
+        try:
+            return "%s %s" % (issue["key"], issue["summary"])
+        except Exception, e:
+            log.error("error making short issue repr: %s (issue=%r)", e, issue)
             raise
 
 
