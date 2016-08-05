@@ -56,7 +56,7 @@ date (i.e. there are probably more supported commands in the latest).
     TOOLS       TOOLS: Tools and Extras           trent.mick
     ...
 
-    $ jirash issues TOOLS-90
+    $ jirash issue TOOLS-90
     TOOLS-90 Add a distclean target (mark.cavage -> trent.mick, Improvem...)
 
     $ jirash TOOLS-90     # shortcut
