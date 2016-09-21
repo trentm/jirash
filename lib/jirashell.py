@@ -85,8 +85,11 @@ class Jira(object):
         self.jira_url = jira_url
         self.username = username
         self.password = password
+        xmlrpclibVerbose = False
+        if log.isEnabledFor(logging.DEBUG):
+            xmlrpclibVerbose = True
         self.server = xmlrpclib.ServerProxy(jira_url + '/rpc/xmlrpc',
-            verbose=False)
+            verbose=xmlrpclibVerbose)
         self.auth = self.server.jira1.login(username, password)
         # WARNING: if we allow a longer jira shell session, then caching
         # might need invalidation.
