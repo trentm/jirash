@@ -5,11 +5,11 @@
 - Working on 2.x. This will be a re-writee to use the JIRA REST API. I'll also
   re-write in node.js because that'll be easier for me. I may also drop a number
   of the features. A quick survey at work showed the following are used:
-    - `jirash issue` -> `jirash issue get KEY`, want shortcut here!
-    - `jirash issues -f FILTER`
-    - `jirash createissue` -> `jirash issue create`
+    - `jirash issue` -> `jirash issue get KEY`, `jirash KEY`.
+    - `jirash issues -f FILTER` (TODO)
+    - `jirash createissue` -> `jirash issue create` (TODO)
     - `jirash link KEY-1 RELATION KEY-2`,
-      e.g. `jirash link KEY-1 duplicates KEY-2`
+      e.g. `jirash link KEY-1 duplicates KEY-2` (TODO)
     - `jirash versions PROJ`
 
 Notes:
