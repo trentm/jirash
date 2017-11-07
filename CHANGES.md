@@ -2,15 +2,18 @@
 
 ## not yet released
 
-- Working on 2.x. This will be a re-write to use the JIRA REST API. I'll also
+- Working on 2.x. This will be a re-writee to use the JIRA REST API. I'll also
   re-write in node.js because that'll be easier for me. I may also drop a number
   of the features. A quick survey at work showed the following are used:
-    - `jirash issue`
+    - `jirash issue` -> `jirash issue get KEY`, want shortcut here!
     - `jirash issues -f FILTER`
-    - `jirash createissue`
-    - `jirash link KEY-1 RELATION KEY-2`, e.g. `jirash link KEY-1
-      duplicates KEY-2`
+    - `jirash createissue` -> `jirash issue create`
+    - `jirash link KEY-1 RELATION KEY-2`,
+      e.g. `jirash link KEY-1 duplicates KEY-2`
     - `jirash versions PROJ`
+
+Notes:
+- maybe new comman called 'ji'? We aren't doing the "shell" thing. Meh.
 
 
 ## 1.8.0

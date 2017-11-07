@@ -30,7 +30,7 @@
 
   or:
 
-        jirash resolve FOO-123 --duplicates FOO-32   # using the language from http://cl.ly/image/401X1R0u0741
+        jirash resolve FOO-123 --duplicates FOO-32
 
 # someday/maybe
 
@@ -39,5 +39,3 @@
     $ jirash comment
     blah blah
     .
-
-- moar from http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/xmlrpc/XmlRpcService.html ?
