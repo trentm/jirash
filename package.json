@@ -1,0 +1,28 @@
+{
+  "name": "jirash",
+  "version": "2.0.0",
+  "description": "a JIRA CLI tool for Trent and friends",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trentm/jirash.git"
+  },
+  "keywords": [
+    "jira",
+    "cli"
+  ],
+  "author": "Trent Mick (trentm@gmail.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/trentm/jirash/issues"
+  },
+  "homepage": "https://github.com/trentm/jirash",
+  "dependencies": {
+    "assert-plus": "^1.0.0",
+    "bunyan": "^1.8.12",
+    "cmdln": "^4.2.1",
+    "restify-clients": "^1.5.2",
+    "tabula": "^1.9.0",
+    "vasync": "^2.1.0",
+    "verror": "^1.10.0"
+  }
+}

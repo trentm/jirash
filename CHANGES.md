@@ -1,5 +1,18 @@
 # jirash Changelog
 
+## not yet released
+
+- Working on 2.x. This will be a re-write to use the JIRA REST API. I'll also
+  re-write in node.js because that'll be easier for me. I may also drop a number
+  of the features. A quick survey at work showed the following are used:
+    - `jirash issue`
+    - `jirash issues -f FILTER`
+    - `jirash createissue`
+    - `jirash link KEY-1 RELATION KEY-2`, e.g. `jirash link KEY-1
+      duplicates KEY-2`
+    - `jirash versions PROJ`
+
+
 ## 1.8.0
 
 - `jirash issue -s,--short KEY` Add the short option to display a short

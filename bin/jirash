@@ -1,4 +1,6 @@
-#!/usr/bin/env bash
+#!/usr/bin/env node
+/*
+ * Copyright (c) 2017, Joyent, Inc.
+ */
 
-TOP=$(cd $(dirname $0)/..; pwd)
-python $TOP/lib/jirashell.py "$@"
+require('../lib/cli').main();
