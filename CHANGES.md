@@ -6,14 +6,16 @@
   re-write in node.js because that'll be easier for me. I may also drop a number
   of the features. A quick survey at work showed the following are used:
     - `jirash issue` -> `jirash issue get KEY`, `jirash KEY`.
-    - `jirash issues -f FILTER` (TODO)
+    - `jirash issues -f FILTER` -> `jirash issue list FILTER` (TODO)
     - `jirash createissue` -> `jirash issue create` (TODO)
     - `jirash link KEY-1 RELATION KEY-2`,
       e.g. `jirash link KEY-1 duplicates KEY-2` (TODO)
     - `jirash versions PROJ`
 
+
 Notes:
 - maybe new comman called 'ji'? We aren't doing the "shell" thing. Meh.
+- set user-agent on jiraClient
 
 
 ## 1.8.0
