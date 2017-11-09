@@ -1,3 +1,15 @@
+# 2.x todo
+
+- ability to archive and release versions:
+    jirash project versions PROJECT ?
+
+    jirash version get ( ID | PROJECT NAME )
+    jirash version list PROJECT
+    jirash version archive ( ID | PROJECT NAME )
+    jirash version release ( ID | PROJECT NAME )
+    jirash version create ( ID | PROJECT NAME ) ...
+
+
 # todo
 
 - add "jirash comment KEY", and -m option (or following args?) on resolve:
