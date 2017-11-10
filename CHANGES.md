@@ -2,6 +2,10 @@
 
 ## not yet released
 
+(nothing yet)
+
+## 2.0.0
+
 - jirash 2.x. This is a re-write to use the JIRA REST API. I'll also re-write in
   node.js because that'll be easier for me and avoids a problem with the default
   Mac Python 2.7 (/usr/bin/python on macOS 10.12) that uses an old OpenSSL 0.9.8
@@ -15,7 +19,8 @@
     - `jirash createissue` -> `jirash issue create` (TODO)
     - `jirash link KEY-1 RELATION KEY-2`,
       e.g. `jirash link KEY-1 duplicates KEY-2` (TODO)
-    - `jirash version list PROJ`, `jirash version archive PROJ NAME`,
+    - `jirash version list PROJ`,
+      `jirash version archive PROJ NAME`,
       `jirash version release PROJ NAME`
 
 
