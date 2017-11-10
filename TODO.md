@@ -1,14 +1,23 @@
 # 2.x todo
 
-- ability to archive and release versions:
-    jirash project versions PROJECT ?
-
-    jirash version get ( ID | PROJECT NAME )
-    jirash version list PROJECT
-    jirash version archive ( ID | PROJECT NAME )
-    jirash version release ( ID | PROJECT NAME )
+- some remaining commands from 1.x
     jirash version create ( ID | PROJECT NAME ) ...
+    jirash issue link ISSUE RELATION ISSUE
+    jirash project list
+    jirash project get PROJECT
 
+- set user-agent on jiraClient
+
+- to re-add to Configuration Reference
+    - `open_status_names` Optional. A list of jira status *names* that correspond
+      to the issue being "open". This is used for the "-o, --open" option to
+      `jirash issues ...`.
+    - `createissue_no_browse`. Optional. Set this to `true` to not open a newly
+      created issue in the browser as part of `jirash createissue`. IOW, this is a
+      substitute for the "-B, --no-browse" option.
+    - `createissue_use_editor`. Optional. Set this to `true` to have `jirash
+      createissue` use your $EDITOR to edit the issue summary (title) and
+      description instead of prompting on stdin.
 
 # todo
 

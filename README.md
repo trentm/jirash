@@ -1,119 +1,100 @@
-A Jira shell. Show a ticket. Create an issue. List projects.
-That sort of thing.
+A limited JIRA CLI. Get an issue. Create an issue. Update project versions.
+Etc.
 
-# Getting Started
+# Install
 
-Get jirash:
+    npm install -g jirash
+    jirash --version
 
-    $ cd ~/opt      # or whereever
-    $ git clone https://github.com/trentm/jirash.git
+This supports Bash completion. Install it something like this:
 
-Put the following in your "~/.bashrc". The bash completion is just for
-sub-commands. It doesn't support completing options or sub-commands
-arguments.
+    # Mac
+    jirash completion > /usr/local/etc/bash_completion.d/jirash \
+        && source /usr/local/etc/bash_completion.d/jirash
 
-    alias jirash='$HOME/opt/jirash/bin/jirash'      # or whatever
-    complete -C 'jirash --bash-completion' jirash   # bash completion
+    # Linux
+    sudo jirash completion > /etc/bash_completion.d/jirash \
+        && source /etc/bash_completion.d/jirash
+
+# Config
 
 First you need a config file with Jira URL and auth info:
 
     $ cat ~/.jirash.json
     {
-      "jira_url": "https://dev.example.com/jira",
-      "https://dev.example.com/jira": {
-        "username": "joe.blow",
-        "password": "secret"
-      }
+        "jira_url": "https://jira.example.com",
+        "jira_username": "joe.blow",
+        "jira_password": "secret"
     }
 
-Then use it. Note that the help output here is probably a little out of
-date (i.e. there are probably more supported commands in the latest).
+# Usage
+
+List available commands:
 
     $ jirash help
     Usage:
         jirash COMMAND [ARGS...]
         jirash help [COMMAND]
-
-    Options:
-        -h, --help          show this help message and exit
-        --version           show version and exit
-        -d, --debug         debug logging
-        -J JIRA_URL, --jira-url=JIRA_URL
-                            Jira base URL. Otherwise defaults to 'jira_url' value
-                            from config file.
-
+    ...
     Commands:
-        createissue    Create a new issue.
-        help (?)       give detailed help on a specific sub-command
-        issue          Get an issue.
-        issuetypes     Get an issue types (e.g. bug, task, ...).
-        projects       List projects (excluding "Archived" projects).
-        versions       Get available versions for the given project.
-
-    $ jirash projects
-    KEY         NAME                              LEAD
-    DOC         DOC: Documentation                philip
-    TOOLS       TOOLS: Tools and Extras           trent.mick
     ...
-
-    $ jirash issue TOOLS-90
-    TOOLS-90 Add a distclean target (mark.cavage -> trent.mick, Improvem...)
-
-    $ jirash TOOLS-90     # shortcut
-    TOOLS-90 Add a distclean target (mark.cavage -> trent.mick, Improvem...)
-
-    $ jirash createissue TOOLS
-    Summary: Foo is broken
-    Assignee (blank for default, 'me' for yourself): me
-    Description (use '.' on a line by itself to finish):
-    blah
-    blah
-    blah
-    .
-    created: TOOLS-157 Foo is broken (trent.mick -> trent.mick, Bug, Normal, Open)
-
-    $ jirash filters
-    ID     AUTHOR           NAME
-    10325  trent.mick       RELENG: open issues
-    10389  trent.mick       TOOLS: open issues
-    10183  trent.mick       trent.mick: open issues
-    10104  trent.mick       trent.mick: reported issues
-
-    # Here "TOOLS" matches the "TOOLS: open issues" saved filter.
-    $ jirash issues -f TOOLS
-    KEY          PRIO      STATUS    TYPE         REPORTER    ASSIGNEE    SUMMARY
-    TOOLS-150    Normal    Open      New Feature  linda       trent.mick  add sdc-vminfo to operator tools
-    TOOLS-143    Normal    Open      Bug          laurel      orlando     Be more tolerant of the location of the VirtualSystem location
+        issue       Search, get, and create JIRA issues.
     ...
 
 
-# Configuration
+Some examples follow. **Get info on an issue**:
+
+    $ jirash issue get IMGAPI-654
+    IMGAPI-654 IMGAPI ExportImage when basename(MANTA_PATH) doesn't exist is (a) wrong and (b) unhelpful (trent.mick -> <unassigned>, Bug, 4 - Normal, Open)
+
+A shortcut for that:
+
+    $ jirash IMGAPI-654
+
+A full JSON dump of REST API data for the issue:
+
+    $ jirash issue get -j IMGAPI-654
+    {
+        "id": "64401",
+        "self": "https://jira.joyent.us/rest/api/2/issue/64401",
+        "key": "IMGAPI-654",
+        "fields": {
+    ...
+
+**List your favourite filters** (saved issue searches):
+
+    $ jirash filter ls
+    ID     NAME                                       OWNER.NAME
+    10644  ADMINUI: open issues                       trent.mick
+    10580  AGENT: open issues                         trent.mick
+    10577  All issues                                 trent.mick
+    ...
+
+**List issues in a filter:**
+
+    $ jirash issue ls AGENT
+    KEY         SUMMARYCLIPPED                            ASSIGNEE     REPORTER    P  STAT  CREATED     UPDATED
+    AGENT-1083  Want auto.DATACENTER_NAME in config-age…  cody.mello   cody.mello  4  Open  2017-09-26  2017-09-26
+    AGENT-1081  config-agent could use one-shot mode fo…  dap          dap         3  Open  2017-08-01  2017-08-01
+    AGENT-1080  hagfish-watcher should use sdcnode        josh.clulow  trent.mick  4  Open  2017-07-14  2017-07-14
+    ...
+
+
+# Configuration Reference
 
 Configuration is via a JSON file at "~/.jirash.json". Example:
 
     {
-      "jira_url": "https://dev.example.com/jira",
-      "https://dev.example.com/jira": {
-        "username": "joe.blow",
-        "password": "secret"
-      },
-      "open_status_names": ["Open", "In Progress", "Reopened", "Foo"]
+        "jira_url": "https://dev.example.com/jira",
+        "jira_username": "joe.blow",
+        "jira_password": "secret"
     }
 
 The possible config vars are:
 
 - `jira_url` The base Jira URL. This or `jirash -J <jira-url> ...` is required.
-- `$jira_url.username` Required. The Jira username with which to auth.
-- `$jira_url.password` Required. The password for the given Jira username.
-- `open_status_names` Optional. A list of jira status *names* that correspond
-  to the issue being "open". This is used for the "-o, --open" option to
-  `jirash issues ...`.
-- `createissue_no_browse`. Set this to `true` to not open a newly created issue
-  in the browser as part of `jirash createissue`. IOW, this is a substitute for
-  the "-B, --no-browse" option.
-- `createissue_use_editor`. Set this to `true` to have `jirash createissue`
-  use your $EDITOR to edit the issue summary (title) and description instead
-  of prompting on stdin.
+- `jira_username` Required. The Jira username with which to auth.
+- `jira_password` Required. The password for the given Jira username.
 
 
 # License

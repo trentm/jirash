@@ -2,20 +2,21 @@
 
 ## not yet released
 
-- Working on 2.x. This will be a re-writee to use the JIRA REST API. I'll also
-  re-write in node.js because that'll be easier for me. I may also drop a number
-  of the features. A quick survey at work showed the following are used:
+- jirash 2.x. This is a re-write to use the JIRA REST API. I'll also re-write in
+  node.js because that'll be easier for me and avoids a problem with the default
+  Mac Python 2.7 (/usr/bin/python on macOS 10.12) that uses an old OpenSSL 0.9.8
+  that doesn't support the TLS version required by, at least my company's,
+  latest JIRA version.
+
+  Some commands will be dropped, some added, and some changed.
+  A quick survey at work showed the following are used:
     - `jirash issue` -> `jirash issue get KEY`, `jirash KEY`.
-    - `jirash issues -f FILTER` -> `jirash issue list FILTER` (TODO)
+    - `jirash issues -f FILTER` -> `jirash issue list FILTER`
     - `jirash createissue` -> `jirash issue create` (TODO)
     - `jirash link KEY-1 RELATION KEY-2`,
       e.g. `jirash link KEY-1 duplicates KEY-2` (TODO)
-    - `jirash versions PROJ`
-
-
-Notes:
-- maybe new comman called 'ji'? We aren't doing the "shell" thing. Meh.
-- set user-agent on jiraClient
+    - `jirash version list PROJ`, `jirash version archive PROJ NAME`,
+      `jirash version release PROJ NAME`
 
 
 ## 1.8.0
