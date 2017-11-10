@@ -2,6 +2,7 @@
   "name": "jirash",
   "version": "2.0.0",
   "description": "a JIRA CLI tool for Trent and friends",
+  "main": "./lib/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/trentm/jirash.git"

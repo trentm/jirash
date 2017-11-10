@@ -97,6 +97,30 @@ The possible config vars are:
 - `jira_password` Required. The password for the given Jira username.
 
 
+# Module Usage
+
+There is a lib/jirashapi.js that is a reasonable REST API wrapper, albeit
+with coverage of very little of the [JIRA REST
+API](https://docs.atlassian.com/jira/REST/server/).
+
+    var JirashApi = require('jirash').JirashApi;
+
+    var config = require('/Users/trentm/.jirash.json');
+    var api = new JirashApi({config: config});
+
+    api.getIssue('IMGAPI-654', function (err, issue) {
+        if (err) {
+            // Handle `err`.
+        }
+        console.log(issue);
+            // { id: '64401',
+            //  self: 'https://jira.joyent.us/rest/api/2/issue/64401',
+            //  key: 'IMGAPI-654',
+            //  fields:
+            //  ...
+    });
+
+
 # License
 
 MIT. See the [LICENSE.txt file](./LICENSE.txt).
