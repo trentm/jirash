@@ -4,6 +4,10 @@
 
 (nothing yet)
 
+## 2.0.1
+
+- Install `jirash` bin in `npm install`.
+
 ## 2.0.0
 
 - jirash 2.x. This is a re-write to use the JIRA REST API. I'll also re-write in
