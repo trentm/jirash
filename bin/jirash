@@ -3,4 +3,10 @@
  * Copyright (c) 2017, Joyent, Inc.
  */
 
+process.stdout.on('error', function (err) {
+    if (err.code === 'EPIPE') {
+        process.exit(0);
+    }
+});
+
 require('../lib/cli').main();
