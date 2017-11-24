@@ -2,7 +2,6 @@
 
 - some remaining commands from 1.x
 
-        jirash version create ( ID | PROJECT NAME ) ...
         jirash version unrelease ... # needed for TOOLS-1937 replacement
         jirash issue create ...
         jirash issue link ISSUE RELATION ISSUE
@@ -22,7 +21,16 @@
       createissue` use your $EDITOR to edit the issue summary (title) and
       description instead of prompting on stdin.
 
+
 # todo
+
+- handle error responses from the REST API of this form:
+    https://docs.atlassian.com/jira/REST/7.4.2/#error-responses
+  a current poor handling example:
+    jirash issue create: error: {"errorMessages":[],"errors":{"name":"A version with this name already exists in this project."}}
+
+
+# old todos
 
 - add "jirash comment KEY", and -m option (or following args?) on resolve:
         jirash resolve FOO-123 because this is what I did
