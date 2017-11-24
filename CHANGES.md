@@ -2,7 +2,9 @@
 
 ## not yet released
 
-(nothing yet)
+- Improve `jirash issue ls FILTER` matching of the "FILTER" term to full filter
+  names: try case-sensitive whole word match to help disambiguate, add a
+  any-substring match attempt.
 
 ## 2.0.1
 

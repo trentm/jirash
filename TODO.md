@@ -1,10 +1,13 @@
 # 2.x todo
 
 - some remaining commands from 1.x
-    jirash version create ( ID | PROJECT NAME ) ...
-    jirash issue link ISSUE RELATION ISSUE
-    jirash project list
-    jirash project get PROJECT
+
+        jirash version create ( ID | PROJECT NAME ) ...
+        jirash version unrelease ... # needed for TOOLS-1937 replacement
+        jirash issue create ...
+        jirash issue link ISSUE RELATION ISSUE
+        jirash project list
+        jirash project get PROJECT
 
 - set user-agent on jiraClient
 
