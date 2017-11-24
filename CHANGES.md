@@ -2,7 +2,8 @@
 
 ## not yet released
 
-- Add `jirash version create PROJECT VERION-NAME`.
+- Add `jirash version update PROJECT VERSION FIELD=VALUE ...`.
+- Add `jirash version create PROJECT VERSION-NAME`.
 - Improve `jirash issue ls FILTER` matching of the "FILTER" term to full filter
   names: try case-sensitive whole word match to help disambiguate, add a
   any-substring match attempt.

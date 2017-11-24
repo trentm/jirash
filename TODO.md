@@ -2,7 +2,6 @@
 
 - some remaining commands from 1.x
 
-        jirash version unrelease ... # needed for TOOLS-1937 replacement
         jirash issue create ...
         jirash issue link ISSUE RELATION ISSUE
         jirash project list
