@@ -4,6 +4,10 @@
 
 (nothing yet)
 
+## 2.1.1
+
+- Fix "Cannot find module 'VError'" errors.
+
 ## 2.1.0
 
 - Add `jirash version update PROJECT VERSION FIELD=VALUE ...`.
