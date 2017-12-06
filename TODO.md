@@ -23,6 +23,13 @@
 
 # todo
 
+- `jirash issue search` or some command to search issues. Perhaps have smart
+  sugar for constructing jql.
+        jirash search 'labels in (RFD-113)'   # jql
+        jirash search label=RFD-113     # sugar
+   Also jump to the search in the browser
+        jirash search -b,--browse JQL
+
 - handle error responses from the REST API of this form:
     https://docs.atlassian.com/jira/REST/7.4.2/#error-responses
   a current poor handling example:
@@ -34,18 +41,10 @@
 - add "jirash comment KEY", and -m option (or following args?) on resolve:
         jirash resolve FOO-123 because this is what I did
         jirash resolve FOO-123 -m "because this is what I did"
-        jirash resolve FOO-123 -m -
-        Comment ('.' to finish):
-        because this is what I did
-        .
-  test ticket: TOOLS-158
 - tab complete for project names
 - http caching and perhaps more aggresive (e.g. for project names and users)
 - '--cc' field in `jirash createissue` to add watchers. Perhaps '-w', '--watch'.
-- search (Doesn't seem to be an XML-RPC API way to do anything
-  but basic text searches though. I.e. can't *create* "filters".)
-  Boo.
-- listing users. Perhaps https://developer.atlassian.com/display/CROWDDEV/Crowd+REST+Resources#CrowdRESTResources-SearchResource
+- listing users
 - updateIssue commands
 - adding a comment:
     $ jirash comment MON-113 blah bah blah

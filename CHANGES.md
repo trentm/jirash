@@ -4,6 +4,15 @@
 
 (nothing yet)
 
+## 2.2.0
+
+- Add `jirash issue create ...` (`jirash create ...` as a shortcut).
+- Fix `jirash issue ls FILTER` *case-senstive* matching of FILTER against
+  filter names.
+- `jirash issues FILTER` shortcut for `jirash issue ls FILTER`.
+- Add hidden `jirash api ...` for doing raw JIRA REST API requests. This is
+  mainly helpful for jirash development.
+
 ## 2.1.1
 
 - Fix "Cannot find module 'VError'" errors.
