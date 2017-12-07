@@ -2,7 +2,8 @@
 
 ## not yet released
 
-(nothing yet)
+- `jirash issues -S,--short ...` option to just show key and full summary,
+  because the clipped summary from default columns is a bit annoying.
 
 ## 2.2.0
 

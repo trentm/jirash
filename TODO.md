@@ -2,26 +2,14 @@
 
 - some remaining commands from 1.x
 
-        jirash issue create ...
         jirash issue link ISSUE RELATION ISSUE
         jirash project list
         jirash project get PROJECT
 
-- set user-agent on jiraClient
-
-- to re-add to Configuration Reference
-    - `open_status_names` Optional. A list of jira status *names* that correspond
-      to the issue being "open". This is used for the "-o, --open" option to
-      `jirash issues ...`.
-    - `createissue_no_browse`. Optional. Set this to `true` to not open a newly
-      created issue in the browser as part of `jirash createissue`. IOW, this is a
-      substitute for the "-B, --no-browse" option.
-    - `createissue_use_editor`. Optional. Set this to `true` to have `jirash
-      createissue` use your $EDITOR to edit the issue summary (title) and
-      description instead of prompting on stdin.
-
 
 # todo
+
+- fix paging in `jirash issue ls FILTER`
 
 - `jirash issue search` or some command to search issues. Perhaps have smart
   sugar for constructing jql.
@@ -34,6 +22,8 @@
     https://docs.atlassian.com/jira/REST/7.4.2/#error-responses
   a current poor handling example:
     jirash issue create: error: {"errorMessages":[],"errors":{"name":"A version with this name already exists in this project."}}
+
+- set user-agent on jiraClient
 
 
 # old todos
