@@ -2,6 +2,7 @@
 
 ## not yet released
 
+- [dev] Add eslint to `make check`.
 - `jirash issues -S,--short ...` option to just show key and full summary,
   because the clipped summary from default columns is a bit annoying.
 

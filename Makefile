@@ -1,8 +1,12 @@
 #
-# Copyright 2017, Joyent, Inc.
+# Copyright (c) 2017, Joyent, Inc.
 #
 
-all:
+ESLINT = ./node_modules/.bin/eslint
+JSFILES := bin/jirash $(shell find lib -name '*.js')
+
+
+all $(ESLINT):
 	npm install
 
 .PHONY: clean
@@ -13,6 +17,9 @@ clean:
 check:: check-version
 	@echo "Check ok."
 
+.PHONY: check-eslint
+check-eslint: | $(ESLINT)
+	$(ESLINT) $(JSFILES)
 
 # Ensure CHANGES.md and package.json have the same version.
 .PHONY: check-version
