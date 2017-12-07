@@ -14,7 +14,7 @@ clean:
 	rm -rf node_modules
 
 .PHONY: check
-check:: check-version
+check:: check-version check-eslint
 	@echo "Check ok."
 
 .PHONY: check-eslint
