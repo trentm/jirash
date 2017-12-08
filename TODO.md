@@ -9,6 +9,13 @@
 
 # todo
 
+- prettier:
+    - my non-defaults:
+        "bracketSpacing": false,   // to discuss with triton-dev
+        "singleQuote": true,
+        "tabWidth": 4
+    - other file types? markdown, json, css
+
 - fix paging in `jirash issue ls FILTER`
 
 - `jirash issue search` or some command to search issues. Perhaps have smart
