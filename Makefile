@@ -19,15 +19,15 @@ fmt: | $(PRETTIER)
 	$(PRETTIER) --write $(JSFILES)
 
 .PHONY: check
-check:: check-version check-eslint check-prettier
+check:: check-version check-eslint check-fmt
 	@echo "Check ok."
 
 .PHONY: check-eslint
 check-eslint: | $(ESLINT)
 	$(ESLINT) $(JSFILES)
 
-.PHONY: check-prettier
-check-prettier: | $(PRETTIER)
+.PHONY: check-fmt
+check-fmt: | $(PRETTIER)
 	@echo "# Checking formatting. Re-run 'make fmt' if this fails."
 	$(PRETTIER) --list-different $(JSFILES)
 
