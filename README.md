@@ -121,6 +121,20 @@ API](https://docs.atlassian.com/jira/REST/server/).
     });
 
 
+# Development
+
+There is lint/style checking (using `eslint` and `prettier --list-different`):
+
+    make check
+
+There is automated code formatting (using `eslint --fix` and `prettier`):
+
+    make fmt
+
+Please be sure to run all of the above prior to submitting changes.
+Sadly, there is not yet a test suite (no `make test`).
+
+
 # License
 
 MIT. See the [LICENSE.txt file](./LICENSE.txt).

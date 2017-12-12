@@ -14,22 +14,30 @@ all $(ESLINT) $(PRETTIER):
 clean:
 	rm -rf node_modules
 
-.PHONY: fmt
-fmt: | $(PRETTIER)
-	$(PRETTIER) --write $(JSFILES)
-
 .PHONY: check
-check:: check-version check-eslint check-fmt
+check:: check-version check-eslint check-prettier
 	@echo "Check ok."
 
 .PHONY: check-eslint
 check-eslint: | $(ESLINT)
 	$(ESLINT) $(JSFILES)
 
-.PHONY: check-fmt
-check-fmt: | $(PRETTIER)
+.PHONY: check-prettier
+check-prettier: | $(PRETTIER)
 	@echo "# Checking formatting. Re-run 'make fmt' if this fails."
 	$(PRETTIER) --list-different $(JSFILES)
+
+.PHONY: fmt
+fmt:: fmt-eslint fmt-prettier
+
+.PHONY: fmt-eslint
+fmt-eslint: | $(ESLINT)
+	$(ESLINT) --fix $(JSFILES)
+
+.PHONY: fmt-prettier
+fmt-prettier: | $(PRETTIER)
+	$(PRETTIER) --write $(JSFILES)
+
 
 # Ensure CHANGES.md and package.json have the same version.
 .PHONY: check-version
