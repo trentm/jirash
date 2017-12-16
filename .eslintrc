@@ -14,8 +14,7 @@
     "env": {
         "node": true
     },
-    "// rules": {
-        "consistent-return": "off",
-        "no-loop-func": "off"
+    "rules": {
+        "curly": ["error", "all"]
     }
 }
