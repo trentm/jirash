@@ -2,6 +2,10 @@
 
 ## not yet released
 
+(nothing yet)
+
+## 2.3.0
+
 - `jirash issue link ISSUE RELATION ISSUE`.
 - `jirash issue linktypes`.
 - [dev] Add prettier (code formatting) to `make check` and `make fmt`.
