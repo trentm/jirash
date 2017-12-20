@@ -123,15 +123,20 @@ API](https://docs.atlassian.com/jira/REST/server/).
 
 # Development
 
-There is lint/style checking (using `eslint` and `prettier --list-different`):
-
-    make check
-
 There is automated code formatting (using `eslint --fix` and `prettier`):
 
     make fmt
 
-Please be sure to run all of the above prior to submitting changes.
+There is lint/style checking (using `eslint` and `prettier --list-different`):
+
+    make check
+
+Please be sure to run all of the above prior to submitting changes. One
+easy way to remember that is to run the following once for a clone to run
+them automatically prior to `git commit`:
+
+    make git-hooks
+
 Sadly, there is not yet a test suite (no `make test`).
 
 

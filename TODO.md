@@ -2,7 +2,6 @@
 
 - some remaining commands from 1.x
 
-        jirash issue link ISSUE RELATION ISSUE
         jirash project list
         jirash project get PROJECT
 

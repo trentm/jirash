@@ -66,3 +66,7 @@ cutarelease: check-version
 	    git tag -a "v$$ver" -m "version $$ver ($$date)" && \
 	    git push --tags origin && \
 	    npm publish
+
+.PHONY: git-hooks
+git-hooks:
+	ln -sf ../../tools/pre-commit.sh .git/hooks/pre-commit
