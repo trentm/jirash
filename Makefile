@@ -27,8 +27,10 @@ check-prettier: | $(PRETTIER)
 	@echo "# Checking formatting. Re-run 'make fmt' if this fails."
 	$(PRETTIER) --list-different $(JSFILES)
 
+# Prettier formatting before eslint, because otherwise `make fmt` will stop on
+# a line >80 chars that prettier could otherwise have fixed.
 .PHONY: fmt
-fmt:: fmt-eslint fmt-prettier
+fmt:: fmt-prettier fmt-eslint
 
 .PHONY: fmt-eslint
 fmt-eslint: | $(ESLINT)
