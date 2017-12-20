@@ -2,6 +2,8 @@
 
 ## not yet released
 
+- `jirash issue link ISSUE RELATION ISSUE`.
+- `jirash issue linktypes`.
 - [dev] Add prettier (code formatting) to `make check` and `make fmt`.
 - [dev] Add eslint to `make check`.
 - `jirash issues -S,--short ...` option to just show key and full summary,

@@ -25,6 +25,10 @@
 
 - set user-agent on jiraClient
 
+- `jirash issue links KEY`
+    These are a combo of "remotelinks"
+        https://docs.atlassian.com/software/jira/docs/api/REST/7.4.2/#api/2/issue-getRemoteIssueLinks
+    and "issuelinks" field in "get issue".
 
 # old todos
 
