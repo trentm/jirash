@@ -4,6 +4,11 @@
 
 (nothing yet)
 
+## 2.4.0
+
+- `jirash issue get ISSUE` now includes component names in the default summary
+  text.
+
 ## 2.3.0
 
 - `jirash issue link ISSUE RELATION ISSUE`.
