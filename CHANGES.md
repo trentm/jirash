@@ -4,6 +4,10 @@
 
 (nothing yet)
 
+## 2.5.0
+
+- `jirash issue list FILTER` now includes a components column.
+
 ## 2.4.0
 
 - `jirash issue get ISSUE` now includes component names in the default summary
