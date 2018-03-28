@@ -1,6 +1,6 @@
 {
   "name": "jirash",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "a JIRA CLI",
   "main": "./lib/index.js",
   "bin": {

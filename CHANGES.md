@@ -4,6 +4,27 @@
 
 (nothing yet)
 
+## 2.5.1
+
+- Fix crash in handling error in `jirash create` editor form:
+
+	```
+	$ jirash create TRITON
+	Issue form was saved to "./jirash-20180328T193857-TRITON.issue".
+	Use "jirash create -f ./jirash-20180328T193857-TRITON.issue TRITON" to retry.
+
+	assert.js:81
+	  throw new assert.AssertionError({
+	  ^
+	AssertionError: idx should be equal to ndone
+		at next (/Users/trentm/tm/jirash/node_modules/vasync/lib/vasync.js:805:14)
+		at onEdit (/Users/trentm/tm/jirash/lib/cli/do_issue/do_create.js:286:17)
+		at ChildProcess.onKidExit (/Users/trentm/tm/jirash/lib/common.js:472:9)
+		at emitTwo (events.js:87:13)
+		at ChildProcess.emit (events.js:172:7)
+		at Process.ChildProcess._handle.onexit (internal/child_process.js:211:12)
+	```
+
 ## 2.5.0
 
 - `jirash issue list FILTER` now includes a components column.
