@@ -1,11 +1,3 @@
-# 2.x todo
-
-- some remaining commands from 1.x
-
-        jirash project list
-        jirash project get PROJECT
-
-
 # todo
 
 - fix paging in `jirash issue ls FILTER`
@@ -21,6 +13,11 @@
     https://docs.atlassian.com/jira/REST/7.4.2/#error-responses
   a current poor handling example:
     jirash issue create: error: {"errorMessages":[],"errors":{"name":"A version with this name already exists in this project."}}
+
+- some remaining commands from 1.x
+
+        jirash project list
+        jirash project get PROJECT
 
 - set user-agent on jiraClient
 
