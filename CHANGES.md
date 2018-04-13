@@ -2,6 +2,8 @@
 
 ## not yet released
 
+- Add `sharedWidth` column to `jirash filter list` output.
+- Add `jirash filters` shortcut for `jirash filter list`.
 - Change "edit in $EDITOR" handling to put the cursor at the *end* of the
   given line, if the editor looks like it is Vi(m).
 
