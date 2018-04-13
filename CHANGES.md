@@ -2,7 +2,8 @@
 
 ## not yet released
 
-(nothing yet)
+- Change "edit in $EDITOR" handling to put the cursor at the *end* of the
+  given line, if the editor looks like it is Vi(m).
 
 ## 2.5.1
 
