@@ -2,8 +2,27 @@
 
 ## not yet released
 
+- Support passing a JSON object describing a new JIRA issue to create
+  via: `jirash issue create -E -f JSON-FILE PROJECT`.  This can be used
+  to specify custom fields, e.g. the following for "Target Fix Version/s" in
+  Joyent's internal JIRA:
+
+  ```
+    "customfield_10070": [
+        {
+            "name": "2018-05-24 Sector 7"
+        }
+    ]
+
+  ```
+
+  This is still a little wonky as you need to use `-E, --no-edit` to ensure the
+  editor form handling doesn't get used, because it can lose fidelity.
+
 - Add `sharedWidth` column to `jirash filter list` output.
+
 - Add `jirash filters` shortcut for `jirash filter list`.
+
 - Change "edit in $EDITOR" handling to put the cursor at the *end* of the
   given line, if the editor looks like it is Vi(m).
 

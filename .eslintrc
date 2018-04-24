@@ -15,6 +15,7 @@
         "node": true
     },
     "rules": {
-        "curly": ["error", "all"]
+        "curly": ["error", "all"],
+        "func-names": ["error", "always"]
     }
 }

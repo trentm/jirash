@@ -2,3 +2,4 @@
 *.pyc
 *.pyo
 /node_modules
+/jirash-*.issue

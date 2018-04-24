@@ -6,7 +6,6 @@ ESLINT = ./node_modules/.bin/eslint
 JSFILES := bin/jirash $(shell find lib -name '*.js')
 PRETTIER = ./node_modules/.bin/prettier
 
-
 all $(ESLINT) $(PRETTIER):
 	npm install
 
@@ -15,37 +14,22 @@ clean:
 	rm -rf node_modules
 
 .PHONY: check
-check:: check-version check-eslint check-prettier
+check:: check-version check-eslint
 	@echo "Check ok."
-
-.PHONY: check-eslint
-check-eslint: | $(ESLINT)
-	$(ESLINT) $(JSFILES)
-
-.PHONY: check-prettier
-check-prettier: | $(PRETTIER)
-	@echo "# Checking formatting. Re-run 'make fmt' if this fails."
-	$(PRETTIER) --list-different $(JSFILES)
-
-# Prettier formatting before eslint, because otherwise `make fmt` will stop on
-# a line >80 chars that prettier could otherwise have fixed.
-.PHONY: fmt
-fmt:: fmt-prettier fmt-eslint
-
-.PHONY: fmt-eslint
-fmt-eslint: | $(ESLINT)
-	$(ESLINT) --fix $(JSFILES)
-
-.PHONY: fmt-prettier
-fmt-prettier: | $(PRETTIER)
-	$(PRETTIER) --write $(JSFILES)
-
 
 # Ensure CHANGES.md and package.json have the same version.
 .PHONY: check-version
 check-version:
 	@echo version is: $(shell cat package.json | json version)
 	[[ `cat package.json | json version` == `grep '^## ' CHANGES.md | head -2 | tail -1 | awk '{print $$2}'` ]]
+
+.PHONY: check-eslint
+check-eslint: | $(ESLINT)
+	$(ESLINT) $(JSFILES)
+
+.PHONY: fmt
+fmt: | $(ESLINT)
+	$(ESLINT) --fix $(JSFILES)
 
 .PHONY: cutarelease
 cutarelease: check-version
