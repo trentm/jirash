@@ -1,6 +1,10 @@
-# jirash Changelog
+# jirash changelog
 
 ## not yet released
+
+(nothing yet)
+
+## 2.6.0
 
 - Support passing a JSON object describing a new JIRA issue to create
   via: `jirash issue create -E -f JSON-FILE PROJECT`.  This can be used
