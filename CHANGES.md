@@ -4,6 +4,10 @@
 
 (nothing yet)
 
+## 2.7.0
+
+- Support `jirash issue create -f -` to read content from stdin.
+
 ## 2.6.0
 
 - Support passing a JSON object describing a new JIRA issue to create
