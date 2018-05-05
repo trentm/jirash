@@ -4,6 +4,12 @@
 
 (nothing yet)
 
+## 2.8.0
+
+- `jirash issue list ...` supports paging through results. Before this it was
+  limited to 50 results.
+- Add `<JirashApi>.createSearchStream()` of issue search results.
+
 ## 2.7.0
 
 - Support `jirash issue create -f -` to read content from stdin.

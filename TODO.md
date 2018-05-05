@@ -1,6 +1,8 @@
 # todo
 
-- fix paging in `jirash issue ls FILTER`
+- Now that `jirash issues FILTER` does paging. The list can be *very* long.
+    - support a limit (and offset?)
+    - would be nice to use tabula 2.x streaming output
 
 - `jirash issue search` or some command to search issues. Perhaps have smart
   sugar for constructing jql.
