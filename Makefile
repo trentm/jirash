@@ -4,9 +4,8 @@
 
 ESLINT = ./node_modules/.bin/eslint
 JSFILES := bin/jirash $(shell find lib -name '*.js')
-PRETTIER = ./node_modules/.bin/prettier
 
-all $(ESLINT) $(PRETTIER):
+all $(ESLINT):
 	npm install
 
 .PHONY: clean
