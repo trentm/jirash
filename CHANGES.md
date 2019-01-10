@@ -4,6 +4,11 @@
 
 (nothing yet)
 
+## 2.8.1
+
+- Fix `jirash issue list ...` crash on an issue that does not have a "priority"
+  field.
+
 ## 2.8.0
 
 - `jirash issue list ...` supports paging through results. Before this it was
