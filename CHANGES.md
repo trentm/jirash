@@ -4,6 +4,11 @@
 
 (nothing yet)
 
+## 2.9.0
+
+- Add rudimentary support to modify issues,
+  `jira issue set ...`
+
 ## 2.8.1
 
 - Fix `jirash issue list ...` crash on an issue that does not have a "priority"
