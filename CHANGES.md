@@ -7,7 +7,7 @@
 ## 2.9.0
 
 - Add rudimentary support to modify issues,
-  `jira issue set ...`
+  `jirash issue edit ...`
 
 ## 2.8.1
 
