@@ -79,6 +79,15 @@ A full JSON dump of REST API data for the issue:
     AGENT-1080  hagfish-watcher should use sdcnode        josh.clulow  trent.mick  4  Open  2017-07-14  2017-07-14
     ...
 
+**Edit an issue:**
+
+    This is less user-friendly than other commands, but allows you more control
+    over editing issues. For more information on JSON accepted, see the Jira API
+    docs:
+    https://docs.atlassian.com/software/jira/docs/api/REST/7.4.2/#api/2/issue-editIssue
+
+    $ jirash issue edit TRITON-1140 '{"labels": [{"add": "lullaby-phase2"}]}'
+
 
 # Configuration Reference
 
