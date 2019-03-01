@@ -20,6 +20,11 @@
     "url": "https://github.com/trentm/jirash/issues"
   },
   "homepage": "https://github.com/trentm/jirash",
+  "files": [
+    "lib",
+    "bin",
+    "etc"
+  ],
   "dependencies": {
     "assert-plus": "^1.0.0",
     "bunyan": "^1.8.12",
