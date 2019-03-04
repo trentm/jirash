@@ -4,6 +4,11 @@
 
 (nothing yet)
 
+## 2.10.0
+
+- Add support to add comments to issues,
+  `jirash issue comment ISSUE <file|->`
+
 ## 2.9.0
 
 - Add rudimentary support to modify issues,
