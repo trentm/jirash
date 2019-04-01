@@ -4,6 +4,10 @@
 
 (nothing yet)
 
+## 2.10.0
+
+- Add `jirash version delete ...` and `JirashApi.deleteVersion`.
+
 ## 2.9.0
 
 - Add rudimentary support to modify issues,
