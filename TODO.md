@@ -30,7 +30,7 @@
 
 # old todos
 
-- add "jirash comment KEY", and -m option (or following args?) on resolve:
+- add -m option (or following args?) on resolve:
         jirash resolve FOO-123 because this is what I did
         jirash resolve FOO-123 -m "because this is what I did"
 - tab complete for project names
@@ -38,12 +38,7 @@
 - '--cc' field in `jirash createissue` to add watchers. Perhaps '-w', '--watch'.
 - listing users
 - updateIssue commands
-- adding a comment:
-    $ jirash comment MON-113 blah bah blah
-    $ jirash comment MON-113
-    blah blah
-    blah
-    .
+
 - `jirash dup(licate) MON-113 of MON-114`  Yes, a literal "of" to try to
   help make clear which is the dupe. Doesn't read quite right:
 

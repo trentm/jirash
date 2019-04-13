@@ -2,7 +2,8 @@
 
 ## not yet released
 
-(nothing yet)
+- Add support to add comments to issues,
+  `jirash issue comment ISSUE <file|->`
 
 ## 2.10.0
 
