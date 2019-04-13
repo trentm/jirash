@@ -2,12 +2,12 @@
 
 ## not yet released
 
-(nothing yet)
+- Add support to add comments to issues,
+  `jirash issue comment ISSUE <file|->`
 
 ## 2.10.0
 
-- Add support to add comments to issues,
-  `jirash issue comment ISSUE <file|->`
+- Add `jirash version delete ...` and `JirashApi.deleteVersion`.
 
 ## 2.9.0
 
