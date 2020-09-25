@@ -2,6 +2,10 @@
 
 ## not yet released
 
+(nothing yet)
+
+## 2.11.0
+
 - Bumped restify-clients dep to v4.
 - Add support to add comments to issues,
   `jirash issue comment ISSUE <file|->`
