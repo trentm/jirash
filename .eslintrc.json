@@ -16,8 +16,7 @@
         "curly": ["error", "all"],
         "func-names": ["error", "always"],
         "no-unused-vars": [
-            "error"
-            ,
+            "error",
             {
                 "vars": "all",
                 "args": "all",
