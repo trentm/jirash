@@ -20,6 +20,9 @@
     "url": "https://github.com/trentm/jirash/issues"
   },
   "homepage": "https://github.com/trentm/jirash",
+  "engines": {
+    "node": ">=10"
+  },
   "files": [
     "lib",
     "bin",
@@ -37,8 +40,7 @@
     "verror": "^1.10.0"
   },
   "devDependencies": {
-    "eslint": "2.x",
-    "eslint-plugin-joyent": "1.x",
+    "eslint": "^7.9.0",
     "prettier": "1.9.1"
   }
 }

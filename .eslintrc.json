@@ -1,0 +1,31 @@
+{
+    "plugins": [],
+    "extends": [
+        "eslint:recommended"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "sourceType": "script",
+        "ecmaFeatures": {
+        }
+    },
+    "env": {
+        "node": true
+    },
+    "rules": {
+        "curly": ["error", "all"],
+        "func-names": ["error", "always"],
+        "no-unused-vars": [
+            "error"
+            ,
+            {
+                "vars": "all",
+                "args": "all",
+                "caughtErrors": "all",
+                "argsIgnorePattern": "^_",
+                "caughtErrorsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_"
+            }
+        ]
+    }
+}
