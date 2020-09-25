@@ -28,6 +28,11 @@
     "bin",
     "etc"
   ],
+  "scripts": {
+    "check": "eslint lib bin/jirash",
+    "lint": "eslint --rule 'prettier/prettier: off' lib bin/jirash",
+    "fmt": "eslint --fix lib bin/jirash"
+  },
   "dependencies": {
     "assert-plus": "^1.0.0",
     "bunyan": "^1.8.12",
@@ -41,6 +46,8 @@
   },
   "devDependencies": {
     "eslint": "^7.9.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
     "prettier": "^2.1.2"
   }
 }

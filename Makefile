@@ -1,34 +1,37 @@
-#
-# Copyright (c) 2017, Joyent, Inc.
-#
 
-ESLINT = ./node_modules/.bin/eslint
-JSFILES := bin/jirash $(shell find lib -name '*.js')
-
-all $(ESLINT):
+.PHONY: all
+all:
 	npm install
 
 .PHONY: clean
 clean:
+	rm -rf jirash-*.tgz
+
+.PHONY: distclean
+distclean: clean
 	rm -rf node_modules
+
+.PHONY: lint
+lint:
+	npm run lint
+
+.PHONY: fmt
+fmt:
+	npm run fmt
 
 .PHONY: check
 check:: check-version check-eslint
 	@echo "Check ok."
+
+.PHONY: check-eslint
+check-eslint:
+	npm run check
 
 # Ensure CHANGES.md and package.json have the same version.
 .PHONY: check-version
 check-version:
 	@echo version is: $(shell cat package.json | json version)
 	[[ `cat package.json | json version` == `grep '^## ' CHANGES.md | head -2 | tail -1 | awk '{print $$2}'` ]]
-
-.PHONY: check-eslint
-check-eslint: | $(ESLINT)
-	$(ESLINT) $(JSFILES)
-
-.PHONY: fmt
-fmt: | $(ESLINT)
-	$(ESLINT) --fix $(JSFILES)
 
 .PHONY: cutarelease
 cutarelease: check-version
