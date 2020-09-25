@@ -34,7 +34,7 @@
     "cmdln": "^4.3.0",
     "lomstream": "1.1.0",
     "read": "^1.0.7",
-    "restify-clients": "^1.5.2",
+    "restify-clients": "^4.0.0",
     "tabula": "^1.9.0",
     "vasync": "^2.1.0",
     "verror": "^1.10.0"
